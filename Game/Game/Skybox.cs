@@ -24,6 +24,7 @@ namespace Game
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
 
+            // define vertex positions
             float[] vertexArray = new float[] {
                 // top 
                 -1f, 1f, 1f, 0f, -1f, 0f, 1f/4f, 0f/3f,
@@ -62,6 +63,7 @@ namespace Game
                 1f, -1f, 1f, -1f, 0f, 0f, 3f/4f, 2f/3f,
             };
 
+            // define index array for triangles
             uint[] indexArray = new uint[] {
                 0, 2, 1,
                 0, 3, 2,
@@ -82,6 +84,7 @@ namespace Game
                 20, 22, 23
             };
 
+            // set buffer offsets
             uint offsetPos = 0;
             uint offsetNormal = offsetPos + (3 * sizeof(float));
             uint offsetTexture = offsetNormal + (3 * sizeof(float));
@@ -103,6 +106,7 @@ namespace Game
             Gl.ActiveTexture(TextureUnit.Texture0);
             Gl.BindTexture(TextureTarget.Texture2D, texture);
 
+            // load and apply texture
             var skyboxImageResult = ReadTextureImage("skybox.png");
             var textureBytes = (ReadOnlySpan<byte>)skyboxImageResult.Data.AsSpan();
             Gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)skyboxImageResult.Width,
@@ -126,6 +130,7 @@ namespace Game
             return new Skybox(vao, vertices, colors, indices, indexArrayLength, Gl, texture);
         }
 
+        // method to load texture image from embedde resources
         private static unsafe ImageResult ReadTextureImage(string textureResource)
         {
             ImageResult result;

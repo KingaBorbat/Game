@@ -13,7 +13,7 @@ namespace Game
         public double HorizontalAngle { get; private set; } = 0.0;
         public double VerticalAngle { get; private set; } = -Math.PI / 2;
 
-        private const float MoveSpeed = 0.1f;
+        private const float MoveSpeed = 0.5f;
         private const double AngleStep = Math.PI / 180 * 5;
 
         public Vector3D<float> Forward => GetPointsFromAngles(HorizontalAngle, VerticalAngle);

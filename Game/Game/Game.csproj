@@ -9,12 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\ground.png" />
+    <None Remove="Resources\ground2.png" />
     <None Remove="Resources\skybox.png" />
     <None Remove="Shaders\FragmentShader.frag" />
     <None Remove="Shaders\VertexShader.vert" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\ground.png" />
+    <EmbeddedResource Include="Resources\ground2.png" />
     <EmbeddedResource Include="Resources\skybox.png" />
     <EmbeddedResource Include="Shaders\FragmentShader.frag" />
     <EmbeddedResource Include="Shaders\VertexShader.vert" />

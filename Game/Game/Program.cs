@@ -11,6 +11,8 @@ namespace Game
 
         private static Skybox skybox;
 
+        private static Map map;
+
         private static GL Gl;
 
         private static IWindow window;
@@ -66,7 +68,7 @@ namespace Game
             };
 
 
-            Gl.ClearColor(System.Drawing.Color.Black);
+            Gl.ClearColor(System.Drawing.Color.White);
 
             SetUpObjects();
 
@@ -92,7 +94,10 @@ namespace Game
             SetViewerPosition();
             SetShininess();
 
+            
+
             DrawSkyBox();
+            DrawMap();
         }
         private static void Window_Update(double obj)
         {
@@ -104,12 +109,14 @@ namespace Game
             skybox.ReleaseGlObject();
         }
 
-
+        // set up objects
         private static void SetUpObjects()
         {
             skybox = Skybox.CreateSkybox(Gl, "");
+            map = Map.CreateMap(Gl, "ground2.png");
         }
 
+        // compile vertex and fragment shaders, link them into shader program
         private static void LinkProgram()
         {
             uint vshader = Gl.CreateShader(ShaderType.VertexShader);
@@ -139,7 +146,7 @@ namespace Game
             Gl.DeleteShader(fshader);
         }
 
-        
+        // handle keyboard input
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
             switch (key)
@@ -171,9 +178,10 @@ namespace Game
             }
         }
 
+        // draw skybox
         private static unsafe void DrawSkyBox()
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(400f);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(100f);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(skybox.Vao);
 
@@ -182,7 +190,7 @@ namespace Game
             {
                 throw new Exception($"{TextureUniformVariableName} uniform not found on shader.");
             }
-            // set texture 0
+            
             Gl.Uniform1(textureLocation, 0);
 
             Gl.ActiveTexture(TextureUnit.Texture0);
@@ -198,6 +206,35 @@ namespace Game
             CheckError();
         }
 
+        // draw map
+        private static unsafe void DrawMap()
+        {
+            var modelMatrix = Matrix4X4.CreateScale(1f, 1f, 1f);
+            var trans = Matrix4X4.CreateTranslation(0f, -10f, 0f);
+            var model = modelMatrix * trans;
+            SetModelMatrix(model);
+            Gl.BindVertexArray(map.Vao);
+
+            int textureLocation = Gl.GetUniformLocation(program, TextureUniformVariableName);
+            if (textureLocation == -1)
+            {
+                throw new Exception($"{TextureUniformVariableName} uniform not found on shader.");
+            }
+            Gl.Uniform1(textureLocation, 0);
+
+            Gl.ActiveTexture(TextureUnit.Texture0);
+            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)GLEnum.Linear);
+            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)GLEnum.Linear);
+            Gl.BindTexture(TextureTarget.Texture2D, map.Texture.Value);
+
+            Gl.DrawElements(GLEnum.Triangles, map.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.BindVertexArray(0);
+            CheckError();
+            Gl.BindTexture(TextureTarget.Texture2D, 0);
+            CheckError();
+        }
+
+        // read given shader
         private static string ReadShader(string shaderFileName)
         {
             using (Stream shaderStream = typeof(Program).Assembly.GetManifestResourceStream("Game.Shaders." + shaderFileName))
