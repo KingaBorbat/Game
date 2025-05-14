@@ -135,7 +135,7 @@ namespace Game
         {
             ImageResult result;
             using (Stream skyeboxStream
-                = typeof(Skybox).Assembly.GetManifestResourceStream("Game.Resources." + textureResource))
+                = typeof(Skybox).Assembly.GetManifestResourceStream("Game.Resources.Textures." + textureResource))
                 result = ImageResult.FromStream(skyeboxStream, ColorComponents.RedGreenBlueAlpha);
 
             return result;

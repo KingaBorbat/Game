@@ -1,11 +1,4 @@
-﻿using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Silk.NET.Maths;
-using Silk.NET.OpenGL;
+﻿using Silk.NET.OpenGL;
 using StbImageSharp;
 
 namespace Game
@@ -93,7 +86,7 @@ namespace Game
         {
             ImageResult result;
             using (Stream skyeboxStream
-                = typeof(Map).Assembly.GetManifestResourceStream("Game.Resources." + textureResource))
+                = typeof(Map).Assembly.GetManifestResourceStream("Game.Resources.Textures." + textureResource))
                 result = ImageResult.FromStream(skyeboxStream, ColorComponents.RedGreenBlueAlpha);
 
             return result;

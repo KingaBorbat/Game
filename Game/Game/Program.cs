@@ -1,6 +1,7 @@
 ﻿using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 
 namespace Game
@@ -10,6 +11,9 @@ namespace Game
         private static CameraDescriptor camera = new();
 
         private static Skybox skybox;
+
+        private static GlObject plant;
+        private static GlObject rock;
 
         private static Map map;
 
@@ -98,6 +102,8 @@ namespace Game
 
             DrawSkyBox();
             DrawMap();
+            DrawAgave();
+            DrawRock();
         }
         private static void Window_Update(double obj)
         {
@@ -113,7 +119,9 @@ namespace Game
         private static void SetUpObjects()
         {
             skybox = Skybox.CreateSkybox(Gl, "");
-            map = Map.CreateMap(Gl, "ground2.png");
+            map = Map.CreateMap(Gl, "ground4.png");
+            plant = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 0.0f, 1f, 0f, 1f }, "agave.obj");
+            rock = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "Rock_1.OBJ");
         }
 
         // compile vertex and fragment shaders, link them into shader program
@@ -234,6 +242,24 @@ namespace Game
             CheckError();
         }
 
+        private static unsafe void DrawAgave()
+        {
+            Matrix4X4<float> scale = Matrix4X4.CreateScale(0.5f);
+            SetModelMatrix(scale);
+            Gl.BindVertexArray(plant.Vao);
+            Gl.DrawElements(GLEnum.Triangles, plant.IndexArrayLength, GLEnum.UnsignedInt, null); 
+            Gl.BindVertexArray(0);
+        }
+
+        private static unsafe void DrawRock()
+        {
+            Matrix4X4<float> scale = Matrix4X4.CreateTranslation(0f, 0f, 5f);
+            SetModelMatrix(scale);
+            Gl.BindVertexArray(rock.Vao);
+            Gl.DrawElements(GLEnum.Triangles, rock.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.BindVertexArray(0);
+        }
+
         // read given shader
         private static string ReadShader(string shaderFileName)
         {
@@ -265,7 +291,7 @@ namespace Game
                 throw new Exception($"{LightPositionVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 0f, 10f, 0f);
+            Gl.Uniform3(location, 0f, 50f, 10f);
             CheckError();
         }
 
