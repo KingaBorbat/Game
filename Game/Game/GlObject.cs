@@ -10,9 +10,11 @@ namespace Game
         public uint Indices { get; }
         public uint IndexArrayLength { get; }
 
+        public uint? Texture { get; set;  }
+
         private GL Gl;
 
-        public GlObject(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl)
+        public GlObject(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, uint texture, GL gl)
         {
             this.Vao = vao;
             this.Vertices = vertices;
@@ -20,6 +22,7 @@ namespace Game
             this.Indices = indeces;
             this.IndexArrayLength = indexArrayLength;
             this.Gl = gl;
+            this.Texture = texture;
         }
 
         internal void ReleaseGlObject()

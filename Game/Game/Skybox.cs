@@ -11,11 +11,9 @@ namespace Game
 {
     internal class Skybox : GlObject
     {
-        public uint? Texture {  get; set; }
         private Skybox(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl, uint texture = 0)
-            : base(vao, vertices, colors, indeces, indexArrayLength, gl)
+            : base(vao, vertices, colors, indeces, indexArrayLength, texture, gl)
         {
-            Texture = texture;
         }
         
         // skybox creation

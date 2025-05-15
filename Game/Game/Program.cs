@@ -102,7 +102,7 @@ namespace Game
 
             DrawSkyBox();
             DrawMap();
-            DrawAgave();
+            //DrawAgave();
             DrawRock();
         }
         private static void Window_Update(double obj)
@@ -120,8 +120,8 @@ namespace Game
         {
             skybox = Skybox.CreateSkybox(Gl, "");
             map = Map.CreateMap(Gl, "ground4.png");
-            plant = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 0.0f, 1f, 0f, 1f }, "agave.obj");
-            rock = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "Rock_1.OBJ");
+            //plant = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 0.0f, 1f, 0f, 1f }, "agave.obj");
+            rock = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "Rock_1.OBJ", "rock.jpg");
         }
 
         // compile vertex and fragment shaders, link them into shader program
@@ -253,11 +253,27 @@ namespace Game
 
         private static unsafe void DrawRock()
         {
-            Matrix4X4<float> scale = Matrix4X4.CreateTranslation(0f, 0f, 5f);
+            Matrix4X4<float> scale = Matrix4X4.CreateRotationZ((float)Math.PI / 2);
             SetModelMatrix(scale);
             Gl.BindVertexArray(rock.Vao);
+
+            int textureLocation = Gl.GetUniformLocation(program, TextureUniformVariableName);
+            if (textureLocation == -1)
+            {
+                throw new Exception($"{TextureUniformVariableName} uniform not found on shader.");
+            }
+            Gl.Uniform1(textureLocation, 0);
+
+            Gl.ActiveTexture(TextureUnit.Texture0);
+            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)GLEnum.Linear);
+            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)GLEnum.Linear);
+            Gl.BindTexture(TextureTarget.Texture2D, rock.Texture.Value);
+
             Gl.DrawElements(GLEnum.Triangles, rock.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
+            CheckError();
+            Gl.BindTexture(TextureTarget.Texture2D, 0);
+            CheckError();
         }
 
         // read given shader

@@ -6,11 +6,9 @@ namespace Game
     // map
     internal class Map : GlObject
     {
-        public uint? Texture {  get; set; }
         private Map(uint vao, uint vertices, uint colors, uint indices, uint indexArrayLength, GL gl, uint texture = 0) :
-            base(vao, vertices, colors, indices, indexArrayLength, gl)  
+            base(vao, vertices, colors, indices, indexArrayLength, texture, gl)  
         { 
-            Texture = texture;
         }
 
         // create map

@@ -8,12 +8,13 @@ using System.Threading.Tasks;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Vulkan;
+using StbImageSharp;
 
 namespace Game
 {
     internal class ObjectResourceReader
     {
-        public static unsafe GlObject CreateObjWithColor(GL Gl, float[] faceColor, string objResource)
+        public static unsafe GlObject CreateObjWithColor(GL Gl, float[] faceColor, string objResource, string textureResource)
         {
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
@@ -33,14 +34,15 @@ namespace Game
 
             CreateGlArraysFromObjArrays(faceColor, objVertices, objFaces, objNormals, normalIndices, objTextures, textureIndices, glVertices, glColors, glIndices);
 
-            return CreateOpenGlObject(Gl, vao, glVertices, glColors, glIndices);
+            return CreateOpenGlObject(Gl, vao, glVertices, glColors, glIndices, textureResource);
         }
 
-        private static unsafe GlObject CreateOpenGlObject(GL Gl, uint vao, List<float> glVertices, List<float> glColors, List<uint> glIndices)
+        private static unsafe GlObject CreateOpenGlObject(GL Gl, uint vao, List<float> glVertices, List<float> glColors, List<uint> glIndices, string textureResource)
         {
             uint offsetPos = 0;
             uint offsetNormal = offsetPos + (3 * sizeof(float));
-            uint vertexSize = offsetNormal + (3 * sizeof(float));
+            uint offsetTexture = offsetNormal + (3 * sizeof(float));
+            uint vertexSize = offsetTexture + (2 * sizeof(float));
 
             uint vertices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ArrayBuffer, vertices);
@@ -52,10 +54,24 @@ namespace Game
             Gl.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, vertexSize, (void*)offsetNormal);
 
             uint colors = Gl.GenBuffer();
-            Gl.BindBuffer(GLEnum.ArrayBuffer, colors);
-            Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)glColors.ToArray().AsSpan(), GLEnum.StaticDraw);
-            Gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 0, null);
-            Gl.EnableVertexAttribArray(1);
+
+            uint texture = Gl.GenTexture();
+            Gl.ActiveTexture(TextureUnit.Texture0);
+            Gl.BindTexture(TextureTarget.Texture2D, texture);
+
+            // load and apply texture
+            var skyboxImageResult = ReadTextureImage(textureResource);
+            var textureBytes = (ReadOnlySpan<byte>)skyboxImageResult.Data.AsSpan();
+            Gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)skyboxImageResult.Width,
+                (uint)skyboxImageResult.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, textureBytes);
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            Gl.BindTexture(TextureTarget.Texture2D, 0);
+
+            Gl.EnableVertexAttribArray(3);
+            Gl.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, vertexSize, (void*)offsetTexture);
 
             uint indices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ElementArrayBuffer, indices);
@@ -65,7 +81,7 @@ namespace Game
             Gl.BindBuffer(GLEnum.ArrayBuffer, 0);
             uint indexArrayLength = (uint)glIndices.Count;
 
-            return new GlObject(vao, vertices, colors, indices, indexArrayLength, Gl);
+            return new GlObject(vao, vertices, colors, indices, indexArrayLength, texture, Gl);
         }
 
         private static unsafe void CreateGlArraysFromObjArrays(
@@ -128,10 +144,10 @@ namespace Game
                     }
 
                     if (texturesProvided) {
-                        /*var objFaceTextures = texturesIndices[index];
+                        var objFaceTextures = texturesIndices[index];
                         var texIndex = objFaceTextures[i] - 1;
                         glVertex.Add(objTextures[texIndex][0]);
-                        glVertex.Add(objTextures[texIndex][1]);*/
+                        glVertex.Add(objTextures[texIndex][1]);
                     }
 
                     // check if vertex exists
@@ -194,22 +210,14 @@ namespace Game
                             objNormals.Add(normal);
                             break;
                         case "vt":
-                            float[] texture = new float[3];
-                            if(lineData.Length < 3)
+                            float[] texture = new float[2];
+                            
+                            for (int i = 0; i < 2; ++i)
                             {
-                                for (int i = 0; i < 2; ++i)
-                                {
-                                    texture[i] = float.Parse(lineData[i], CultureInfo.InvariantCulture);
-                                }
-                                texture[2] = 0f;
+                                texture[i] = float.Parse(lineData[i], CultureInfo.InvariantCulture);
                             }
-                            else
-                            {
-                                for (int i = 0; i < 3; ++i)
-                                {
-                                    texture[i] = float.Parse(lineData[i], CultureInfo.InvariantCulture);
-                                }
-                            }
+                            texture[1] = 1f - texture[1];
+                            
                             objTextures.Add(texture);
                             break;
                         case "f":
@@ -267,6 +275,16 @@ namespace Game
                     }
                 }
             }
+        }
+
+        private static unsafe ImageResult ReadTextureImage(string textureResource)
+        {
+            ImageResult result;
+            using (Stream skyeboxStream
+                = typeof(Skybox).Assembly.GetManifestResourceStream("Game.Resources.Textures." + textureResource))
+                result = ImageResult.FromStream(skyeboxStream, ColorComponents.RedGreenBlueAlpha);
+
+            return result;
         }
 
     }
