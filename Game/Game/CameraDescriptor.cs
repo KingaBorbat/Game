@@ -9,7 +9,7 @@ namespace Game
 {
     internal class CameraDescriptor
     {
-        public Vector3D<float> Position { get; private set; } = new(0, 0, 0);
+        public Vector3D<float> Position { get; private set; } = new(0, 10, 0);
         public double HorizontalAngle { get; private set; } = 0.0;
         public double VerticalAngle { get; private set; } = -Math.PI / 2;
 

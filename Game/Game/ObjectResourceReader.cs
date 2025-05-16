@@ -14,7 +14,7 @@ namespace Game
 {
     internal class ObjectResourceReader
     {
-        public static unsafe GlObject CreateObjWithColor(GL Gl, float[] faceColor, string objResource, string textureResource)
+        public static unsafe GlObject CreateObjWithColor(GL Gl, string objResource, string textureResource)
         {
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
@@ -32,7 +32,7 @@ namespace Game
             List<float> glColors = new List<float>();
             List<uint> glIndices = new List<uint>();
 
-            CreateGlArraysFromObjArrays(faceColor, objVertices, objFaces, objNormals, normalIndices, objTextures, textureIndices, glVertices, glColors, glIndices);
+            CreateGlArraysFromObjArrays(objVertices, objFaces, objNormals, normalIndices, objTextures, textureIndices, glVertices, glColors, glIndices);
 
             return CreateOpenGlObject(Gl, vao, glVertices, glColors, glIndices, textureResource);
         }
@@ -85,7 +85,6 @@ namespace Game
         }
 
         private static unsafe void CreateGlArraysFromObjArrays(
-            float[] faceColor,
             List<float[]> objVertices,
             List<int[]> objFaces,
             List<float[]> objNormals,
@@ -104,7 +103,7 @@ namespace Game
             for (int index = 0; index < objFaces.Count; index++)
             {
                 var objFace = objFaces[index];
-                
+
                 if (!normalsProvided)
                 {
                     var aObjVertex = objVertices[objFace[0] - 1];
@@ -143,7 +142,8 @@ namespace Game
                         glVertex.Add(normal.Z);
                     }
 
-                    if (texturesProvided) {
+                    if (texturesProvided)
+                    {
                         var objFaceTextures = texturesIndices[index];
                         var texIndex = objFaceTextures[i] - 1;
                         glVertex.Add(objTextures[texIndex][0]);
@@ -155,7 +155,6 @@ namespace Game
                     if (!glVertexIndices.ContainsKey(glVertexStringKey))
                     {
                         glVertices.AddRange(glVertex);
-                        glColors.AddRange(faceColor);
                         glVertexIndices.Add(glVertexStringKey, glVertexIndices.Count);
                     }
 
@@ -181,7 +180,6 @@ namespace Game
             objTextures = new List<float[]>();
             normalIndices = new List<int[]>();
             textureIndices = new List<int[]>();
-
             using (Stream objStream = typeof(ObjectResourceReader).Assembly.GetManifestResourceStream("Game.Resources.Objects." + objresource))
             using (StreamReader objReader = new StreamReader(objStream))
             {
@@ -211,13 +209,13 @@ namespace Game
                             break;
                         case "vt":
                             float[] texture = new float[2];
-                            
+
                             for (int i = 0; i < 2; ++i)
                             {
                                 texture[i] = float.Parse(lineData[i], CultureInfo.InvariantCulture);
                             }
                             texture[1] = 1f - texture[1];
-                            
+
                             objTextures.Add(texture);
                             break;
                         case "f":
@@ -228,7 +226,7 @@ namespace Game
                             {
                                 var parts = item.Split('/');
                                 faceVertices.Add(int.Parse(parts[0]));
-                                if(parts.Length == 2)
+                                if (parts.Length == 2)
                                 {
                                     textIndices.Add(int.Parse(parts[1]));
                                 }
@@ -244,12 +242,12 @@ namespace Game
 
                             if (faceVertices.Count == 3)
                             {
-                                objFaces.Add(new int[] { faceVertices[0], faceVertices[1], faceVertices[2] });  
-                                if(normIndices.Count > 0)
+                                objFaces.Add(new int[] { faceVertices[0], faceVertices[1], faceVertices[2] });
+                                if (normIndices.Count > 0)
                                 {
                                     normalIndices.Add(new int[] { normIndices[0], normIndices[1], normIndices[2] });
                                 }
-                                if(textIndices.Count > 0)
+                                if (textIndices.Count > 0)
                                 {
                                     textureIndices.Add(new int[] { textIndices[0], textIndices[1], textIndices[2] });
                                 }
@@ -269,9 +267,9 @@ namespace Game
                                     textureIndices.Add(new int[] { textIndices[0], textIndices[2], textIndices[3] });
                                 }
                             }
-                            
+
                             break;
-                      
+
                     }
                 }
             }

@@ -1,4 +1,5 @@
-﻿using Silk.NET.Input;
+﻿using System.Diagnostics;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Vulkan;
@@ -11,8 +12,8 @@ namespace Game
         private static CameraDescriptor camera = new();
 
         private static Skybox skybox;
-
-        private static GlObject plant;
+        private static List<GlObject> trees = new();
+        private static List<string> treeNames = new();
         private static GlObject rock;
 
         private static Map map;
@@ -41,7 +42,7 @@ namespace Game
         static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
-            windowOptions.Title = "2 szeminárium";
+            windowOptions.Title = "Jungle Game";
             windowOptions.Size = new Vector2D<int>(1000, 1000);
 
             windowOptions.PreferredDepthBufferBits = 24;
@@ -73,7 +74,6 @@ namespace Game
 
 
             Gl.ClearColor(System.Drawing.Color.White);
-
             SetUpObjects();
 
             LinkProgram();
@@ -98,12 +98,7 @@ namespace Game
             SetViewerPosition();
             SetShininess();
 
-            
-
-            DrawSkyBox();
-            DrawMap();
-            //DrawAgave();
-            DrawRock();
+            DrawObjects();
         }
         private static void Window_Update(double obj)
         {
@@ -113,6 +108,9 @@ namespace Game
         private static void Window_Closing()
         {
             skybox.ReleaseGlObject();
+            map.ReleaseGlObject();
+            rock.ReleaseGlObject();
+            for (int i = 0; i < trees.Count; i++) trees[i].ReleaseGlObject();
         }
 
         // set up objects
@@ -120,8 +118,15 @@ namespace Game
         {
             skybox = Skybox.CreateSkybox(Gl, "");
             map = Map.CreateMap(Gl, "ground4.png");
-            //plant = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 0.0f, 1f, 0f, 1f }, "agave.obj");
-            rock = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "Rock_1.OBJ", "rock.jpg");
+            rock = ObjectResourceReader.CreateObjWithColor(Gl, "Rock_1.OBJ", "rock.jpg");
+            for (int i = 0; i < 9; i++)
+            {
+                int x = i + 1;
+                string name = "Simple_Tree_0" + x + ".obj";
+                GlObject t = ObjectResourceReader.CreateObjWithColor(Gl, name, "Lp_tree_bake_DefaultMaterial_BaseColor.png");
+                trees.Add(t);
+            }
+            MapObjectRandomizer.Generate();
         }
 
         // compile vertex and fragment shaders, link them into shader program
@@ -186,42 +191,26 @@ namespace Game
             }
         }
 
-        // draw skybox
-        private static unsafe void DrawSkyBox()
+        public static void DrawObjects()
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(100f);
+            Matrix4X4<float> scale = Matrix4X4.CreateScale(150f);
+            var trans = Matrix4X4.CreateTranslation(0f, 30f, 0f);
+            Matrix4X4<float> modelMatrix = scale * trans;
+            DrawObject(skybox, modelMatrix);
+            scale = Matrix4X4.CreateScale(1f, 1f, 1f);
+            modelMatrix = scale;
+            DrawObject(map, modelMatrix);
+
+            for (int i = 0; i < MapObjectRandomizer.modelMatrices.Count; i++)
+            {
+                DrawObject(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.modelMatrices[i]);
+            }
+        }
+
+        private static unsafe void DrawObject(GlObject obj, Matrix4X4<float> modelMatrix)
+        {
             SetModelMatrix(modelMatrix);
-            Gl.BindVertexArray(skybox.Vao);
-
-            int textureLocation = Gl.GetUniformLocation(program, TextureUniformVariableName);
-            if (textureLocation == -1)
-            {
-                throw new Exception($"{TextureUniformVariableName} uniform not found on shader.");
-            }
-            
-            Gl.Uniform1(textureLocation, 0);
-
-            Gl.ActiveTexture(TextureUnit.Texture0);
-            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)GLEnum.Linear);
-            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)GLEnum.Linear);
-            Gl.BindTexture(TextureTarget.Texture2D, skybox.Texture.Value);
-
-            Gl.DrawElements(GLEnum.Triangles, skybox.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
-
-            CheckError();
-            Gl.BindTexture(TextureTarget.Texture2D, 0);
-            CheckError();
-        }
-
-        // draw map
-        private static unsafe void DrawMap()
-        {
-            var modelMatrix = Matrix4X4.CreateScale(1f, 1f, 1f);
-            var trans = Matrix4X4.CreateTranslation(0f, -10f, 0f);
-            var model = modelMatrix * trans;
-            SetModelMatrix(model);
-            Gl.BindVertexArray(map.Vao);
+            Gl.BindVertexArray(obj.Vao);
 
             int textureLocation = Gl.GetUniformLocation(program, TextureUniformVariableName);
             if (textureLocation == -1)
@@ -233,43 +222,9 @@ namespace Game
             Gl.ActiveTexture(TextureUnit.Texture0);
             Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)GLEnum.Linear);
             Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)GLEnum.Linear);
-            Gl.BindTexture(TextureTarget.Texture2D, map.Texture.Value);
+            Gl.BindTexture(TextureTarget.Texture2D, obj.Texture.Value);
 
-            Gl.DrawElements(GLEnum.Triangles, map.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
-            CheckError();
-            Gl.BindTexture(TextureTarget.Texture2D, 0);
-            CheckError();
-        }
-
-        private static unsafe void DrawAgave()
-        {
-            Matrix4X4<float> scale = Matrix4X4.CreateScale(0.5f);
-            SetModelMatrix(scale);
-            Gl.BindVertexArray(plant.Vao);
-            Gl.DrawElements(GLEnum.Triangles, plant.IndexArrayLength, GLEnum.UnsignedInt, null); 
-            Gl.BindVertexArray(0);
-        }
-
-        private static unsafe void DrawRock()
-        {
-            Matrix4X4<float> scale = Matrix4X4.CreateRotationZ((float)Math.PI / 2);
-            SetModelMatrix(scale);
-            Gl.BindVertexArray(rock.Vao);
-
-            int textureLocation = Gl.GetUniformLocation(program, TextureUniformVariableName);
-            if (textureLocation == -1)
-            {
-                throw new Exception($"{TextureUniformVariableName} uniform not found on shader.");
-            }
-            Gl.Uniform1(textureLocation, 0);
-
-            Gl.ActiveTexture(TextureUnit.Texture0);
-            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)GLEnum.Linear);
-            Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)GLEnum.Linear);
-            Gl.BindTexture(TextureTarget.Texture2D, rock.Texture.Value);
-
-            Gl.DrawElements(GLEnum.Triangles, rock.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.DrawElements(GLEnum.Triangles, obj.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
             CheckError();
             Gl.BindTexture(TextureTarget.Texture2D, 0);
