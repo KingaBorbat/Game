@@ -18,6 +18,11 @@ namespace Game
         public static List<Matrix4X4<float>> edgeTreesModelMatrices = new();
         public static List<int> treeIndices = new();
         public static List<Matrix4X4<float>> treesModelMatrices = new();
+        public static List<Matrix4X4<float>> plantsModelMatrices = new();
+        public static List<Matrix4X4<float>> rocksModelMatrices = new();
+        public static List<Vector2D<float>> obstacleCoordinates = new();
+        private static int limit = 170;
+        private static float minDistance = 20;
 
         private static readonly Random rand = new();
 
@@ -88,10 +93,7 @@ namespace Game
 
         internal static void GenerateTrees()
         {
-            int limit = 170;
-
-            int n = 10;
-            float minDistance = 25;
+            int n = 20;
             int i = 0;
             List<Vector2D<float>> generatedCoordinates = new();
 
@@ -101,11 +103,12 @@ namespace Game
                 float z = rand.Next(-limit, limit+1);
                 var coord = new Vector2D<float>(x, z);
 
-                bool invalid = generatedCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance);
+                bool invalid = obstacleCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance);
 
                 if(!invalid)
                 {
                     generatedCoordinates.Add(coord);
+                    obstacleCoordinates.Add(coord);
                     i++;
                 }
             }
@@ -120,6 +123,75 @@ namespace Game
                 var modelMatrix = scale * rotY * trans;
                 treesModelMatrices.Add(modelMatrix);
                 treeIndices.Add(index);
+            }
+        }
+
+        internal static void GeneratePlants()
+        {
+            int n = 100;
+            int i = 0;
+            List<Vector2D<float>> generatedCoordinates = new();
+
+            while (i < n)
+            {
+                float x = rand.Next(-limit, limit + 1);
+                float z = rand.Next(-limit, limit + 1);
+                var coord = new Vector2D<float>(x, z);
+
+                bool invalid = obstacleCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance);
+
+                if (!invalid)
+                {
+                    generatedCoordinates.Add(coord);
+                    obstacleCoordinates.Add(coord);
+                    i++;
+                }
+            }
+            float scaleValue = 5;
+            foreach (Vector2D<float> coord in generatedCoordinates)
+            {
+                var index = rand.Next(0, 5);
+                var rotate = rand.Next(-19, 19);
+
+                var scale = Matrix4X4.CreateScale(scaleValue);
+                var trans = Matrix4X4.CreateTranslation(new Vector3D<float>(coord.X, 0, coord.Y));
+                var rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
+                var modelMatrix = scale * rotY * trans;
+                plantsModelMatrices.Add(modelMatrix);
+            }
+        }
+
+        internal static void GenerateRocks()
+        {
+            int n = 30;
+            int i = 0;
+            List<Vector2D<float>> generatedCoordinates = new();
+
+            while (i < n)
+            {
+                float x = rand.Next(-limit, limit + 1);
+                float z = rand.Next(-limit, limit + 1);
+                var coord = new Vector2D<float>(x, z);
+
+                bool invalid = obstacleCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance);
+
+                if (!invalid)
+                {
+                    generatedCoordinates.Add(coord);
+                    obstacleCoordinates.Add(coord);
+                    i++;
+                }
+            }
+            foreach (Vector2D<float> coord in generatedCoordinates)
+            {
+                var index = rand.Next(0, 5);
+                var rotate = rand.Next(-19, 19);
+
+                var scale = Matrix4X4.CreateScale(1f, 1f, 1f);
+                var trans = Matrix4X4.CreateTranslation(new Vector3D<float>(coord.X, 0, coord.Y));
+                var rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
+                var modelMatrix = scale * rotY * trans;
+                rocksModelMatrices.Add(modelMatrix);
             }
         }
     }

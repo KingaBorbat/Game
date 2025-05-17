@@ -1,8 +1,6 @@
-﻿using System.Diagnostics;
-using Silk.NET.Input;
+﻿using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
-using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 
 namespace Game
@@ -15,6 +13,7 @@ namespace Game
         private static List<GlObject> trees = new();
         private static List<string> treeNames = new();
         private static GlObject rock;
+        private static GlObject agave;
         private static Map map;
 
         private static GL Gl;
@@ -118,6 +117,7 @@ namespace Game
             map.ReleaseGlObject();
             rock.ReleaseGlObject();
             for (int i = 0; i < trees.Count; i++) trees[i].ReleaseGlObject();
+            agave.ReleaseGlObject();
         }
 
         // set up objects
@@ -125,7 +125,8 @@ namespace Game
         {
             skybox = Skybox.CreateSkybox(Gl, "");
             map = Map.CreateMap(Gl, "ground4.png");
-            rock = ObjectResourceReader.CreateObjWithColor(Gl, "Rock_1.OBJ", "rock.jpg");
+            rock = ObjectResourceReader.CreateObjWithColor(Gl, "rock.obj", "rockTexture.jpg");
+            agave = ObjectResourceReader.CreateObjWithColor(Gl, "agave.obj", "agaveTexture.png");
             for (int i = 0; i < 9; i++)
             {
                 int x = i + 1;
@@ -135,6 +136,8 @@ namespace Game
             }
             MapObjectRandomizer.GenerateEdgeTrees();
             MapObjectRandomizer.GenerateTrees();
+            MapObjectRandomizer.GeneratePlants();
+            MapObjectRandomizer.GenerateRocks();
         }
 
         // compile vertex and fragment shaders, link them into shader program
@@ -221,10 +224,16 @@ namespace Game
                 Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObject(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
             }
-            trans = Matrix4X4.CreateTranslation(0f, 50f, 0f);
-            scale = Matrix4X4.CreateScale(10f);
-            SetModelMatrix(scale*trans);
-            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 0);
+            foreach(Matrix4X4<float> modelMatr in MapObjectRandomizer.plantsModelMatrices)
+            {
+                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
+                DrawObject(agave, modelMatr);
+            }
+            foreach (Matrix4X4<float> modelMatr in MapObjectRandomizer.rocksModelMatrices)
+            {
+                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
+                DrawObject(rock, modelMatr);
+            }
         }
 
         private static unsafe void DrawObject(GlObject obj, Matrix4X4<float> modelMatrix)

@@ -99,6 +99,8 @@ namespace Game
             var vertexNormals = new Dictionary<int, Vector3D<float>>();
             var normalsProvided = (objNormals.Count > 0) ? true : false;
             var texturesProvided = (objTextures.Count > 0) ? true : false;
+            Console.WriteLine(normalIndices.Count);
+            Console.WriteLine(objNormals.Count);
             Vector3D<float> normal = default;
             for (int index = 0; index < objFaces.Count; index++)
             {
