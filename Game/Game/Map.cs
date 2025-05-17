@@ -21,10 +21,10 @@ namespace Game
             // defien vertex positions
             float[] vertexArray = new float[]
             {
-                -100f, 0f, 100f, 0f, 1f, 0f, 0f, 1f, 0f, 
-                100f, 0f, 100f, 0f, 1f, 0f, 1f, 1f, 0f,
-                100f, 0f, -100f, 0f, 1f, 0f, 1f, 0f, 0f,
-                -100f, 0f, -100f, 0f, 1f, 0f, 0f, 0f, 0f
+                -1f, 0f, 1f, 0f, 1f, 0f, 0f, 1f, 0f, 
+                1f, 0f, 1f, 0f, 1f, 0f, 1f, 1f, 0f,
+                1f, 0f, -1f, 0f, 1f, 0f, 1f, 0f, 0f,
+                -1f, 0f, -1f, 0f, 1f, 0f, 0f, 0f, 0f
             };
 
             // define index array for triangles

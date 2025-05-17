@@ -2,22 +2,29 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using static System.Formats.Asn1.AsnWriter;
 
 namespace Game
 {
     internal class MapObjectRandomizer
     {
+        public static List<int> edgeTreeIndices = new();
+        public static List<Matrix4X4<float>> edgeTreesModelMatrices = new();
         public static List<int> treeIndices = new();
-        public static List<Matrix4X4<float>> modelMatrices = new();
+        public static List<Matrix4X4<float>> treesModelMatrices = new();
 
-        internal static void Generate()
+        private static readonly Random rand = new();
+
+        internal static void GenerateEdgeTrees()
         {
-            Random rand = new Random();
-            for (int x = -90; x <= 90; x += 15)
+            int width = 190;
+            for (int x = -width; x <= width; x += 10)
             {
                 int index = rand.Next(0, 9);
                 float rotate = rand.Next(-19, 19);
@@ -26,12 +33,12 @@ namespace Game
                     rotate = rand.Next(-19, 19);
                 }
                 var scale = Matrix4X4.CreateScale(1f, 1f, 1f);
-                var trans = Matrix4X4.CreateTranslation(new Vector3D<float>((float)x, 0, 90f));
+                var trans = Matrix4X4.CreateTranslation(new Vector3D<float>((float)x, 0, (float)width));
                 var rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
 
                 var modelMatrix = scale * rotY * trans;
-                modelMatrices.Add(modelMatrix);
-                treeIndices.Add(index);
+                edgeTreesModelMatrices.Add(modelMatrix);
+                edgeTreeIndices.Add(index);
 
                 index = rand.Next(0, 9);
                 rotate = rand.Next(-19, 19);
@@ -40,12 +47,12 @@ namespace Game
                     rotate = rand.Next(-19, 19);
                 }
                 scale = Matrix4X4.CreateScale(1f, 1f, 1f);
-                trans = Matrix4X4.CreateTranslation(new Vector3D<float>((float)x, 0, -90f));
+                trans = Matrix4X4.CreateTranslation(new Vector3D<float>((float)x, 0, -(float)width));
                 rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
 
                 modelMatrix = scale * rotY * trans;
-                modelMatrices.Add(modelMatrix);
-                treeIndices.Add(index);
+                edgeTreesModelMatrices.Add(modelMatrix);
+                edgeTreeIndices.Add(index);
 
                 index = rand.Next(0, 9);
                 rotate = rand.Next(-19, 19);
@@ -54,12 +61,12 @@ namespace Game
                     rotate = rand.Next(-19, 19);
                 }
                 scale = Matrix4X4.CreateScale(1f, 1f, 1f);
-                trans = Matrix4X4.CreateTranslation(new Vector3D<float>(90f, 0, (float)x));
+                trans = Matrix4X4.CreateTranslation(new Vector3D<float>((float)width, 0, (float)x));
                 rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
 
                 modelMatrix = scale * rotY * trans;
-                modelMatrices.Add(modelMatrix);
-                treeIndices.Add(index);
+                edgeTreesModelMatrices.Add(modelMatrix);
+                edgeTreeIndices.Add(index);
 
                 index = rand.Next(0, 9);
                 rotate = rand.Next(-19, 19);
@@ -68,14 +75,51 @@ namespace Game
                     rotate = rand.Next(-19, 19);
                 }
                 scale = Matrix4X4.CreateScale(1f, 1f, 1f);
-                trans = Matrix4X4.CreateTranslation(new Vector3D<float>(-90f, 0, (float)x));
+                trans = Matrix4X4.CreateTranslation(new Vector3D<float>(-(float)width, 0, (float)x));
                 rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
 
                 modelMatrix = scale * rotY * trans;
-                modelMatrices.Add(modelMatrix);
+                edgeTreesModelMatrices.Add(modelMatrix);
+                edgeTreeIndices.Add(index);
+
+
+            }
+        }
+
+        internal static void GenerateTrees()
+        {
+            int limit = 170;
+
+            int n = 10;
+            float minDistance = 25;
+            int i = 0;
+            List<Vector2D<float>> generatedCoordinates = new();
+
+            while(i < n)
+            {
+                float x = rand.Next(-limit, limit+1);
+                float z = rand.Next(-limit, limit+1);
+                var coord = new Vector2D<float>(x, z);
+
+                bool invalid = generatedCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance);
+
+                if(!invalid)
+                {
+                    generatedCoordinates.Add(coord);
+                    i++;
+                }
+            }
+
+            foreach (Vector2D<float> coord in generatedCoordinates) {
+                var index = rand.Next(0, 5);
+                var rotate = rand.Next(-19, 19);
+
+                var scale = Matrix4X4.CreateScale(1f, 1f, 1f);
+                var trans = Matrix4X4.CreateTranslation(new Vector3D<float>(coord.X, 0, coord.Y));
+                var rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
+                var modelMatrix = scale * rotY * trans;
+                treesModelMatrices.Add(modelMatrix);
                 treeIndices.Add(index);
-
-
             }
         }
     }

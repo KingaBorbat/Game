@@ -126,7 +126,8 @@ namespace Game
                 GlObject t = ObjectResourceReader.CreateObjWithColor(Gl, name, "Lp_tree_bake_DefaultMaterial_BaseColor.png");
                 trees.Add(t);
             }
-            MapObjectRandomizer.Generate();
+            MapObjectRandomizer.GenerateEdgeTrees();
+            MapObjectRandomizer.GenerateTrees();
         }
 
         // compile vertex and fragment shaders, link them into shader program
@@ -193,18 +194,23 @@ namespace Game
 
         public static void DrawObjects()
         {
-            Matrix4X4<float> scale = Matrix4X4.CreateScale(150f);
+            Matrix4X4<float> scale = Matrix4X4.CreateScale(200f);
             var trans = Matrix4X4.CreateTranslation(0f, 30f, 0f);
             Matrix4X4<float> modelMatrix = scale * trans;
             DrawObject(skybox, modelMatrix);
-            scale = Matrix4X4.CreateScale(1f, 1f, 1f);
+            scale = Matrix4X4.CreateScale(200f, 1f, 200f);
             modelMatrix = scale;
             DrawObject(map, modelMatrix);
 
-            for (int i = 0; i < MapObjectRandomizer.modelMatrices.Count; i++)
+            for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
-                DrawObject(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.modelMatrices[i]);
+                DrawObject(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);
             }
+
+            for (int i = 0; i < MapObjectRandomizer.treesModelMatrices.Count; i++) {
+                DrawObject(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
+            }
+            scale = Matrix4X4.CreateScale(10f);
         }
 
         private static unsafe void DrawObject(GlObject obj, Matrix4X4<float> modelMatrix)
