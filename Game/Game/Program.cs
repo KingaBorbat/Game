@@ -15,7 +15,6 @@ namespace Game
         private static List<GlObject> trees = new();
         private static List<string> treeNames = new();
         private static GlObject rock;
-
         private static Map map;
 
         private static GL Gl;
@@ -33,10 +32,15 @@ namespace Game
 
         private const string TextureUniformVariableName = "uTexture";
 
-        private const string LightColorVariableName = "lightColor";
-        private const string LightPositionVariableName = "lightPos";
-        private const string ViewPosVariableName = "viewPos";
-        private const string ShininessVariableName = "shininess";
+        private const string LightColorVariableName = "uLightColor";
+        private const string LightPositionVariableName = "uLightPos";
+        private const string ViewPositionVariableName = "uViewPos";
+
+        private const string AmbientStrength = "uAmbientStrength";
+        private const string DiffuseStrength = "uDiffuseStrength";
+        private const string SpecularStrength = "uSpecularStrength";
+
+        private const string ShinenessVariableName = "uShininess";
 
         private static float Shininess = 50;
         static void Main(string[] args)
@@ -97,6 +101,9 @@ namespace Game
             SetLightPosition();
             SetViewerPosition();
             SetShininess();
+            SetAmbient();
+            SetDiffuse();
+            SetSpecular();
 
             DrawObjects();
         }
@@ -197,20 +204,27 @@ namespace Game
             Matrix4X4<float> scale = Matrix4X4.CreateScale(200f);
             var trans = Matrix4X4.CreateTranslation(0f, 30f, 0f);
             Matrix4X4<float> modelMatrix = scale * trans;
+            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
             DrawObject(skybox, modelMatrix);
             scale = Matrix4X4.CreateScale(200f, 1f, 200f);
             modelMatrix = scale;
+            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
             DrawObject(map, modelMatrix);
 
             for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
+                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObject(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);
             }
 
             for (int i = 0; i < MapObjectRandomizer.treesModelMatrices.Count; i++) {
+                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObject(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
             }
+            trans = Matrix4X4.CreateTranslation(0f, 50f, 0f);
             scale = Matrix4X4.CreateScale(10f);
+            SetModelMatrix(scale*trans);
+            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 0);
         }
 
         private static unsafe void DrawObject(GlObject obj, Matrix4X4<float> modelMatrix)
@@ -255,9 +269,11 @@ namespace Game
                 throw new Exception($"{LightColorVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 1f, 1f, 1f);
+            Gl.Uniform3(location, 0.6f, 0.9f, 1.0f);
             CheckError();
         }
+
+
 
         private static unsafe void SetLightPosition()
         {
@@ -268,17 +284,17 @@ namespace Game
                 throw new Exception($"{LightPositionVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 0f, 50f, 10f);
+            Gl.Uniform3(location, 0f, 100f, 150f);
             CheckError();
         }
 
         private static unsafe void SetViewerPosition()
         {
-            int location = Gl.GetUniformLocation(program, ViewPosVariableName);
+            int location = Gl.GetUniformLocation(program, ViewPositionVariableName);
 
             if (location == -1)
             {
-                throw new Exception($"{ViewPosVariableName} uniform not found on shader.");
+                throw new Exception($"{ViewPositionVariableName} uniform not found on shader.");
             }
 
             Gl.Uniform3(location, camera.Position.X, camera.Position.Y, camera.Position.Z);
@@ -287,17 +303,55 @@ namespace Game
 
         private static unsafe void SetShininess()
         {
-            int location = Gl.GetUniformLocation(program, ShininessVariableName);
+            int location = Gl.GetUniformLocation(program, ShinenessVariableName);
 
             if (location == -1)
             {
-                throw new Exception($"{ShininessVariableName} uniform not found on shader.");
+                throw new Exception($"{ShinenessVariableName} uniform not found on shader.");
             }
 
             Gl.Uniform1(location, Shininess);
             CheckError();
         }
 
+        private static unsafe void SetAmbient()
+        {
+            int location = Gl.GetUniformLocation(program, AmbientStrength);
+
+            if (location == -1)
+            {
+                throw new Exception($"{AmbientStrength} uniform not found on shader.");
+            }
+
+            Gl.Uniform3(location, 0.3f, 0.2f, 0.1f);
+            CheckError();
+        }
+
+        private static unsafe void SetDiffuse()
+        {
+            int location = Gl.GetUniformLocation(program, DiffuseStrength);
+
+            if (location == -1)
+            {
+                throw new Exception($"{DiffuseStrength} uniform not found on shader.");
+            }
+
+            Gl.Uniform3(location, 0.5f, 0.3f, 0.1f);
+            CheckError();
+        }
+
+        private static unsafe void SetSpecular()
+        {
+            int location = Gl.GetUniformLocation(program, SpecularStrength);
+
+            if (location == -1)
+            {
+                throw new Exception($"{SpecularStrength} uniform not found on shader.");
+            }
+
+            Gl.Uniform3(location, 0.2f, 0.1f, 0.05f);
+            CheckError();
+        }
 
         private static unsafe void SetModelMatrix(Matrix4X4<float> modelMatrix)
         {
@@ -360,6 +414,7 @@ namespace Game
             var error = (ErrorCode)Gl.GetError();
             if (error != ErrorCode.NoError)
                 throw new Exception("GL.GetError() returned " + error.ToString());
+            
         }
     }
 }
