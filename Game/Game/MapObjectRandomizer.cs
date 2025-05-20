@@ -228,7 +228,7 @@ namespace Game
 
         internal static void GenerateGlowworms()
         {
-            int n = 30;
+            int n = 100;
             int i = 0;
             List<Vector2D<float>> generatedCoordinates = new();
 
@@ -243,8 +243,6 @@ namespace Game
                 if (!invalid)
                 {
                     generatedCoordinates.Add(coord);
-                    generatedCoordinates.Add(new Vector2D<float>(x + 5f, z + 5f));
-                    generatedCoordinates.Add(new Vector2D<float>(x + 10f, z + 5f));
                     i++;
                 }
             }

@@ -9,6 +9,8 @@ namespace Game
     {
         private static CameraDescriptor camera = new();
 
+        private static Animation animation = new Animation();
+
         private static Skybox skybox;
         private static List<GlObject> trees = new();
         private static List<string> treeNames = new();
@@ -108,10 +110,10 @@ namespace Game
 
             DrawObjects();
         }
-        private static void Window_Update(double obj)
+        private static void Window_Update(double deltaTime)
         {
 
-
+            animation.AdvanceTime(deltaTime);
         }
         private static void Window_Closing()
         {
@@ -220,7 +222,8 @@ namespace Game
             modelMatrix = scale;
             Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
             DrawObjectWithTexture(map, modelMatrix);
-
+            scale = Matrix4X4.CreateScale(2f);
+            DrawObjectWithTexture(rock, scale);
             for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
                 Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
@@ -241,22 +244,29 @@ namespace Game
                 Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObjectWithTexture(rock, modelMatr);
             }
+            
             Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 0);
             Gl.Uniform1(Gl.GetUniformLocation(program, "uUseEmissive"), 1);
             Gl.Uniform3(Gl.GetUniformLocation(program, "uEmissiveColor"), 0.5f, 0.5f, 0f);
             foreach (Vector2D<float> coord in MapObjectRandomizer.mushroomPositions)
             {
                 Matrix4X4<float> rotate = Matrix4X4.CreateRotationX(-(float)Math.PI / 2);
-                scale = Matrix4X4.CreateScale(0.5f);
+                scale = Matrix4X4.CreateScale(0.1f);
                 trans = Matrix4X4.CreateTranslation(coord.X, 0f, coord.Y);
                 DrawObjectWithColor(mushroom, scale * rotate * trans);
             }
-            foreach (Vector2D<float> coord in MapObjectRandomizer.glowwormPositions)
-            {
-                Matrix4X4<float> rotate = Matrix4X4.CreateRotationX(-(float)Math.PI / 2);
-                scale = Matrix4X4.CreateScale(0.001f);
+            float orbitRadius = 5f;
+            scale = Matrix4X4.CreateScale(0.001f);
+            for (int i = 0; i < MapObjectRandomizer.glowwormPositions.Count; i+=3) {
+                float offset = i * i;
+                var coord = MapObjectRandomizer.glowwormPositions[i];
                 trans = Matrix4X4.CreateTranslation(coord.X, 10f, coord.Y);
-                DrawObjectWithColor(glowworm, scale * trans);
+                var rot = Matrix4X4.CreateRotationX((float)animation.GlobalXAngle + offset);
+                var rotY = Matrix4X4.CreateRotationY((float)animation.GlobalYAngle + offset);
+                var rotZ = Matrix4X4.CreateRotationZ((float)animation.GlobalZAngle + offset);
+                var trans2 = Matrix4X4.CreateTranslation(coord.X, 10F, coord.Y);
+                Matrix4X4<float> orbitOffset = Matrix4X4.CreateTranslation(0f, 0f, orbitRadius);
+                DrawObjectWithColor(glowworm, scale * orbitOffset * rot * rotY * rotZ * trans2);
             }
         }
 
