@@ -17,11 +17,13 @@ namespace Game
         public static List<int> edgeTreeIndices = new();
         public static List<Matrix4X4<float>> edgeTreesModelMatrices = new();
         public static List<int> treeIndices = new();
+        private static List<Vector2D<float>> treeCoordinates = new();
         public static List<Matrix4X4<float>> treesModelMatrices = new();
         public static List<Matrix4X4<float>> plantsModelMatrices = new();
         public static List<Matrix4X4<float>> rocksModelMatrices = new();
         public static List<Vector2D<float>> obstacleCoordinates = new();
         public static List<Vector2D<float>> mushroomPositions = new();
+        public static List<Vector2D<float>> glowwormPositions = new();
         private static int limit = 170;
         private static float minDistance = 20;
 
@@ -125,6 +127,7 @@ namespace Game
                 treesModelMatrices.Add(modelMatrix);
                 treeIndices.Add(index);
             }
+            treeCoordinates = generatedCoordinates;
         }
 
         internal static void GeneratePlants()
@@ -197,7 +200,7 @@ namespace Game
 
         internal static void GenerateMushrooms()
         {
-            int n = 10;
+            int n = 15;
             int i = 0;
             List<Vector2D<float>> generatedCoordinates = new();
 
@@ -220,6 +223,35 @@ namespace Game
             foreach (Vector2D<float> coord in generatedCoordinates)
             {
                 mushroomPositions.Add(coord);
+            }
+        }
+
+        internal static void GenerateGlowworms()
+        {
+            int n = 30;
+            int i = 0;
+            List<Vector2D<float>> generatedCoordinates = new();
+
+            while (i < n)
+            {
+                float x = rand.Next(-limit, limit + 1);
+                float z = rand.Next(-limit, limit + 1);
+                var coord = new Vector2D<float>(x, z);
+
+                bool invalid = treeCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance) && generatedCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance);
+
+                if (!invalid)
+                {
+                    generatedCoordinates.Add(coord);
+                    generatedCoordinates.Add(new Vector2D<float>(x + 5f, z + 5f));
+                    generatedCoordinates.Add(new Vector2D<float>(x + 10f, z + 5f));
+                    i++;
+                }
+            }
+
+            foreach (Vector2D<float> coord in generatedCoordinates)
+            {
+                glowwormPositions.Add(coord);
             }
         }
     }

@@ -143,6 +143,7 @@ namespace Game
             MapObjectRandomizer.GeneratePlants();
             MapObjectRandomizer.GenerateRocks();
             MapObjectRandomizer.GenerateMushrooms();
+            MapObjectRandomizer.GenerateGlowworms();
         }
 
         // compile vertex and fragment shaders, link them into shader program
@@ -250,7 +251,13 @@ namespace Game
                 trans = Matrix4X4.CreateTranslation(coord.X, 0f, coord.Y);
                 DrawObjectWithColor(mushroom, scale * rotate * trans);
             }
-            
+            foreach (Vector2D<float> coord in MapObjectRandomizer.glowwormPositions)
+            {
+                Matrix4X4<float> rotate = Matrix4X4.CreateRotationX(-(float)Math.PI / 2);
+                scale = Matrix4X4.CreateScale(0.001f);
+                trans = Matrix4X4.CreateTranslation(coord.X, 10f, coord.Y);
+                DrawObjectWithColor(glowworm, scale * trans);
+            }
         }
 
         private static unsafe void DrawObjectWithTexture(GlObject obj, Matrix4X4<float> modelMatrix)
@@ -358,7 +365,7 @@ namespace Game
                 throw new Exception($"{AmbientStrength} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 0.3f, 0.2f, 0.1f);
+            Gl.Uniform3(location, 0.6f, 0.4f, 0.2f);
             CheckError();
         }
 
