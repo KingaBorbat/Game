@@ -7,7 +7,7 @@ namespace Game
 {
     internal class Program
     {
-        private static CameraDescriptor camera = new();
+        private static CameraDescriptor camera;
 
         private static Animation animation = new Animation();
 
@@ -114,6 +114,7 @@ namespace Game
         }
         private static void Window_Update(double deltaTime)
         {
+            camera.UpdatePosition();
             animation.AdvanceTime(deltaTime);
         }
         private static void Window_Closing()
@@ -135,6 +136,7 @@ namespace Game
             mushroom = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "mushroom.obj");
             glowworm = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "sphere.obj");
             character.InitializeCharacter();
+            camera = new CameraDescriptor(character);
             for (int i = 0; i < 9; i++)
             {
                 int x = i + 1;
@@ -183,34 +185,39 @@ namespace Game
         // handle keyboard input
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
+            Vector3D<float> forward = new Vector3D<float>(
+                (float)Math.Sin(character.rotationY),
+                0,
+                (float)Math.Cos(character.rotationY)
+                
+            );
 
+            Vector3D<float> right = new Vector3D<float>(
+                (float)Math.Cos(character.rotationY),
+                0,
+                -(float)Math.Sin(character.rotationY)
+            );
+
+            float moveSpeed = 0.1f;
             switch (key)
             {
-                case Key.Up:
-                    camera.MoveForward();
-                    break;
-                case Key.Down:
-                    camera.MoveBackward();
-                    break;
-                case Key.Left:
-                    camera.MoveUp();
-                    break;
-                case Key.Right:
-                    camera.MoveDown();
-                    break;
-                case Key.A:
-                    camera.RotateLeft();
-                    break;
-                case Key.D:
-                    camera.RotateRight();
-                    break;
                 case Key.W:
-                    camera.RotateUp();
+                    character.position += right * moveSpeed;
+                    camera.UpdatePosition();
                     break;
                 case Key.S:
-                    camera.RotateDown();
+                    character.position -= right * moveSpeed;
+                    camera.UpdatePosition();
                     break;
-
+                    break;
+                case Key.A:
+                    character.rotationY += (float)Math.PI / 10;
+                    camera.UpdatePosition();
+                    break;
+                case Key.D:
+                    character.rotationY -= (float)Math.PI / 10;
+                    camera.UpdatePosition();
+                    break;
             }
         }
 

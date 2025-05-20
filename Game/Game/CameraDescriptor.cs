@@ -9,69 +9,31 @@ namespace Game
 {
     internal class CameraDescriptor
     {
-        public Vector3D<float> Position { get; private set; } = new(-5, 10, 0);
-        public double HorizontalAngle { get; private set; } = 0.0;
-        public double VerticalAngle { get; private set; } = -Math.PI / 2;
+        private Character _character;
 
-        private const float MoveSpeed = 0.5f;
-        private const double AngleStep = Math.PI / 180 * 5;
+        private const float DistanceBehind = 6f;
+        private const float HeightAbove = 1.5f;
 
-        public Vector3D<float> Forward => GetPointsFromAngles(HorizontalAngle, VerticalAngle);
-        public Vector3D<float> Right => Vector3D.Normalize(GetPointsFromAngles(HorizontalAngle, VerticalAngle + Math.PI / 2));
-        public Vector3D<float> Up => Vector3D.Normalize(GetPointsFromAngles(HorizontalAngle + Math.PI / 2, VerticalAngle));
+        public Vector3D<float> Position { get; private set; }
+        public Vector3D<float> Target => _character.position;
+        public Vector3D<float> Up { get; } = Vector3D<float>.UnitY;
 
-        public Vector3D<float> Target => Position + Forward;
-
-        public void MoveForward()
+        public CameraDescriptor(Character character)
         {
-            Position += Forward * MoveSpeed;
+            _character = character;
+            UpdatePosition();
         }
 
-        public void MoveBackward()
+        public void UpdatePosition()
         {
-            Position -= Forward * MoveSpeed;
+            float behindX = _character.position.X - DistanceBehind * (float)Math.Cos(-_character.rotationY);
+            float behindZ = _character.position.Z - DistanceBehind * (float)Math.Sin(-_character.rotationY);
+
+            Position = new Vector3D<float>(
+                behindX,
+                _character.position.Y + HeightAbove,
+                behindZ
+            );
         }
-
-        public void MoveUp()
-        {
-            Position += Up * MoveSpeed;
-        }
-
-
-        public void MoveDown()
-        {
-            Position -= Up * MoveSpeed;
-        }
-
-        public void RotateUp()
-        {
-            HorizontalAngle += AngleStep;
-        }
-
-        public void RotateDown()
-        {
-            HorizontalAngle -= AngleStep;
-        }
-
-        public void RotateLeft()
-        {
-            VerticalAngle -= AngleStep;
-        }
-
-        public void RotateRight()
-        {
-            VerticalAngle += AngleStep;
-        }
-
-        private Vector3D<float> GetPointsFromAngles(double Pitch, double Yaw)
-        {
-            var x = Math.Cos(Pitch) * Math.Cos(Yaw);
-            var y = Math.Sin(Pitch);
-            var z = Math.Cos(Pitch) * Math.Sin(Yaw);
-
-            return Vector3D.Normalize(new Vector3D<float>((float)x, (float)y, (float)z));
-        }
-
-
     }
 }
