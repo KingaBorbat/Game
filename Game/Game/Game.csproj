@@ -12,6 +12,8 @@
     <None Remove="Resources\ground.png" />
     <None Remove="Resources\ground2.png" />
     <None Remove="Resources\Objects\agave.obj" />
+    <None Remove="Resources\Objects\lizard.obj" />
+    <None Remove="Resources\Objects\lizard2.obj" />
     <None Remove="Resources\Objects\mushroom.obj" />
     <None Remove="Resources\Objects\rock.obj" />
     <None Remove="Resources\Objects\Simple_Tree_01.obj" />
@@ -28,6 +30,7 @@
     <None Remove="Resources\skybox.png" />
     <None Remove="Resources\Textures\agaveTexture.png" />
     <None Remove="Resources\Textures\ground4.png" />
+    <None Remove="Resources\Textures\lizard.jpg" />
     <None Remove="Resources\Textures\Lp_tree_bake_DefaultMaterial_BaseColor.png" />
     <None Remove="Resources\Textures\rockTexture.jpg" />
     <None Remove="Shaders\FragmentShader.frag" />
@@ -36,6 +39,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Objects\agave.obj" />
+    <EmbeddedResource Include="Resources\Objects\lizard.obj" />
+    <EmbeddedResource Include="Resources\Objects\lizard2.obj" />
     <EmbeddedResource Include="Resources\Objects\mushroom.obj" />
     <EmbeddedResource Include="Resources\Objects\rock.obj" />
     <EmbeddedResource Include="Resources\Objects\Simple_Tree_01.obj" />
@@ -50,6 +55,7 @@
     <EmbeddedResource Include="Resources\Objects\sphere.obj" />
     <EmbeddedResource Include="Resources\Textures\agaveTexture.png" />
     <EmbeddedResource Include="Resources\Textures\ground4.png" />
+    <EmbeddedResource Include="Resources\Textures\lizard.jpg" />
     <EmbeddedResource Include="Resources\Textures\Lp_tree_bake_DefaultMaterial_BaseColor.png" />
     <EmbeddedResource Include="Resources\Textures\rockTexture.jpg" />
     <EmbeddedResource Include="Resources\Textures\skybox.png" />

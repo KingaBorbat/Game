@@ -18,6 +18,7 @@ namespace Game
         private static GlObject agave;
         private static GlObject mushroom;
         private static GlObject glowworm;
+        private static Character character;
         private static Map map;
 
         private static GL Gl;
@@ -81,6 +82,7 @@ namespace Game
 
 
             Gl.ClearColor(System.Drawing.Color.White);
+            character = new Character(Gl);
             SetUpObjects();
 
             LinkProgram();
@@ -112,7 +114,6 @@ namespace Game
         }
         private static void Window_Update(double deltaTime)
         {
-
             animation.AdvanceTime(deltaTime);
         }
         private static void Window_Closing()
@@ -133,6 +134,7 @@ namespace Game
             agave = ObjectResourceReader.CreateObjWithtexture(Gl, "agave.obj", "agaveTexture.png");
             mushroom = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "mushroom.obj");
             glowworm = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "sphere.obj");
+            character.InitializeCharacter();
             for (int i = 0; i < 9; i++)
             {
                 int x = i + 1;
@@ -181,6 +183,7 @@ namespace Game
         // handle keyboard input
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
+
             switch (key)
             {
                 case Key.Up:
@@ -207,6 +210,7 @@ namespace Game
                 case Key.S:
                     camera.RotateDown();
                     break;
+
             }
         }
 
@@ -220,28 +224,25 @@ namespace Game
             DrawObjectWithTexture(skybox, modelMatrix);
             scale = Matrix4X4.CreateScale(200f, 1f, 200f);
             modelMatrix = scale;
-            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
             DrawObjectWithTexture(map, modelMatrix);
-            scale = Matrix4X4.CreateScale(2f);
-            DrawObjectWithTexture(rock, scale);
+            Vector3D<float> pos = character.position;
+            trans = Matrix4X4.CreateTranslation(pos.X, pos.Y, pos.Z);
+            var rotY = Matrix4X4.CreateRotationY(character.rotationY);
+            DrawObjectWithTexture(character.obj, rotY * trans);
             for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
-                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObjectWithTexture(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);
             }
 
             for (int i = 0; i < MapObjectRandomizer.treesModelMatrices.Count; i++) {
-                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObjectWithTexture(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
             }
             foreach(Matrix4X4<float> modelMatr in MapObjectRandomizer.plantsModelMatrices)
             {
-                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObjectWithTexture(agave, modelMatr);
             }
             foreach (Matrix4X4<float> modelMatr in MapObjectRandomizer.rocksModelMatrices)
             {
-                Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
                 DrawObjectWithTexture(rock, modelMatr);
             }
             
@@ -262,7 +263,7 @@ namespace Game
                 var coord = MapObjectRandomizer.glowwormPositions[i];
                 trans = Matrix4X4.CreateTranslation(coord.X, 10f, coord.Y);
                 var rot = Matrix4X4.CreateRotationX((float)animation.GlobalXAngle + offset);
-                var rotY = Matrix4X4.CreateRotationY((float)animation.GlobalYAngle + offset);
+                rotY = Matrix4X4.CreateRotationY((float)animation.GlobalYAngle + offset);
                 var rotZ = Matrix4X4.CreateRotationZ((float)animation.GlobalZAngle + offset);
                 var trans2 = Matrix4X4.CreateTranslation(coord.X, 10F, coord.Y);
                 Matrix4X4<float> orbitOffset = Matrix4X4.CreateTranslation(0f, 0f, orbitRadius);
