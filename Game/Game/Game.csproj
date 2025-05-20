@@ -12,6 +12,7 @@
     <None Remove="Resources\ground.png" />
     <None Remove="Resources\ground2.png" />
     <None Remove="Resources\Objects\agave.obj" />
+    <None Remove="Resources\Objects\mushroom.obj" />
     <None Remove="Resources\Objects\rock.obj" />
     <None Remove="Resources\Objects\Simple_Tree_01.obj" />
     <None Remove="Resources\Objects\Simple_Tree_02.obj" />
@@ -22,6 +23,7 @@
     <None Remove="Resources\Objects\Simple_Tree_07.obj" />
     <None Remove="Resources\Objects\Simple_Tree_08.obj" />
     <None Remove="Resources\Objects\Simple_Tree_09.obj" />
+    <None Remove="Resources\Objects\sphere.obj" />
     <None Remove="Resources\Objects\Tree.obj" />
     <None Remove="Resources\skybox.png" />
     <None Remove="Resources\Textures\agaveTexture.png" />
@@ -34,6 +36,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Objects\agave.obj" />
+    <EmbeddedResource Include="Resources\Objects\mushroom.obj" />
     <EmbeddedResource Include="Resources\Objects\rock.obj" />
     <EmbeddedResource Include="Resources\Objects\Simple_Tree_01.obj" />
     <EmbeddedResource Include="Resources\Objects\Simple_Tree_02.obj" />
@@ -44,7 +47,7 @@
     <EmbeddedResource Include="Resources\Objects\Simple_Tree_07.obj" />
     <EmbeddedResource Include="Resources\Objects\Simple_Tree_08.obj" />
     <EmbeddedResource Include="Resources\Objects\Simple_Tree_09.obj" />
-    <EmbeddedResource Include="Resources\Objects\Tree.obj" />
+    <EmbeddedResource Include="Resources\Objects\sphere.obj" />
     <EmbeddedResource Include="Resources\Textures\agaveTexture.png" />
     <EmbeddedResource Include="Resources\Textures\ground4.png" />
     <EmbeddedResource Include="Resources\Textures\Lp_tree_bake_DefaultMaterial_BaseColor.png" />

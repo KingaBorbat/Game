@@ -14,6 +14,8 @@ namespace Game
         private static List<string> treeNames = new();
         private static GlObject rock;
         private static GlObject agave;
+        private static GlObject mushroom;
+        private static GlObject glowworm;
         private static Map map;
 
         private static GL Gl;
@@ -125,19 +127,22 @@ namespace Game
         {
             skybox = Skybox.CreateSkybox(Gl, "");
             map = Map.CreateMap(Gl, "ground4.png");
-            rock = ObjectResourceReader.CreateObjWithColor(Gl, "rock.obj", "rockTexture.jpg");
-            agave = ObjectResourceReader.CreateObjWithColor(Gl, "agave.obj", "agaveTexture.png");
+            rock = ObjectResourceReader.CreateObjWithtexture(Gl, "rock.obj", "rockTexture.jpg");
+            agave = ObjectResourceReader.CreateObjWithtexture(Gl, "agave.obj", "agaveTexture.png");
+            mushroom = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "mushroom.obj");
+            glowworm = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "sphere.obj");
             for (int i = 0; i < 9; i++)
             {
                 int x = i + 1;
                 string name = "Simple_Tree_0" + x + ".obj";
-                GlObject t = ObjectResourceReader.CreateObjWithColor(Gl, name, "Lp_tree_bake_DefaultMaterial_BaseColor.png");
+                GlObject t = ObjectResourceReader.CreateObjWithtexture(Gl, name, "Lp_tree_bake_DefaultMaterial_BaseColor.png");
                 trees.Add(t);
             }
             MapObjectRandomizer.GenerateEdgeTrees();
             MapObjectRandomizer.GenerateTrees();
             MapObjectRandomizer.GeneratePlants();
             MapObjectRandomizer.GenerateRocks();
+            MapObjectRandomizer.GenerateMushrooms();
         }
 
         // compile vertex and fragment shaders, link them into shader program
@@ -204,39 +209,51 @@ namespace Game
 
         public static void DrawObjects()
         {
-            Matrix4X4<float> scale = Matrix4X4.CreateScale(200f);
+            Matrix4X4<float> scale = Matrix4X4.CreateScale(400f);
             var trans = Matrix4X4.CreateTranslation(0f, 30f, 0f);
             Matrix4X4<float> modelMatrix = scale * trans;
+            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseEmissive"), 0);
             Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
-            DrawObject(skybox, modelMatrix);
+            DrawObjectWithTexture(skybox, modelMatrix);
             scale = Matrix4X4.CreateScale(200f, 1f, 200f);
             modelMatrix = scale;
             Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
-            DrawObject(map, modelMatrix);
+            DrawObjectWithTexture(map, modelMatrix);
 
             for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
                 Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
-                DrawObject(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);
+                DrawObjectWithTexture(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);
             }
 
             for (int i = 0; i < MapObjectRandomizer.treesModelMatrices.Count; i++) {
                 Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
-                DrawObject(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
+                DrawObjectWithTexture(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
             }
             foreach(Matrix4X4<float> modelMatr in MapObjectRandomizer.plantsModelMatrices)
             {
                 Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
-                DrawObject(agave, modelMatr);
+                DrawObjectWithTexture(agave, modelMatr);
             }
             foreach (Matrix4X4<float> modelMatr in MapObjectRandomizer.rocksModelMatrices)
             {
                 Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
-                DrawObject(rock, modelMatr);
+                DrawObjectWithTexture(rock, modelMatr);
             }
+            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 0);
+            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseEmissive"), 1);
+            Gl.Uniform3(Gl.GetUniformLocation(program, "uEmissiveColor"), 0.5f, 0.5f, 0f);
+            foreach (Vector2D<float> coord in MapObjectRandomizer.mushroomPositions)
+            {
+                Matrix4X4<float> rotate = Matrix4X4.CreateRotationX(-(float)Math.PI / 2);
+                scale = Matrix4X4.CreateScale(0.5f);
+                trans = Matrix4X4.CreateTranslation(coord.X, 0f, coord.Y);
+                DrawObjectWithColor(mushroom, scale * rotate * trans);
+            }
+            
         }
 
-        private static unsafe void DrawObject(GlObject obj, Matrix4X4<float> modelMatrix)
+        private static unsafe void DrawObjectWithTexture(GlObject obj, Matrix4X4<float> modelMatrix)
         {
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(obj.Vao);
@@ -260,6 +277,15 @@ namespace Game
             CheckError();
         }
 
+        private static unsafe void DrawObjectWithColor(GlObject obj, Matrix4X4<float> modelMatrix)
+        {
+            SetModelMatrix(modelMatrix);
+            Gl.BindVertexArray(obj.Vao);
+            Gl.DrawElements(GLEnum.Triangles, obj.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.BindVertexArray(0);
+            CheckError();
+        }
+
         // read given shader
         private static string ReadShader(string shaderFileName)
         {
@@ -278,7 +304,7 @@ namespace Game
                 throw new Exception($"{LightColorVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 0.6f, 0.9f, 1.0f);
+            Gl.Uniform3(location, 0.3f, 0.4f, 0.7f);
             CheckError();
         }
 
@@ -293,7 +319,7 @@ namespace Game
                 throw new Exception($"{LightPositionVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 0f, 100f, 150f);
+            Gl.Uniform3(location, 0f, 50f,0f);
             CheckError();
         }
 

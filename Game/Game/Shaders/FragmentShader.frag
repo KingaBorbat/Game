@@ -13,6 +13,8 @@ uniform float uShininess;
 
 uniform sampler2D uTexture;
 uniform bool uUseTexture;
+uniform vec3 uEmissiveColor;
+uniform bool uUseEmissive;
 		
 in vec4 outCol;
 in vec3 outNormal;
@@ -35,6 +37,8 @@ void main()
 
     
     vec4 baseColor = uUseTexture ? texture(uTexture, outTex) : outCol;
-    vec3 result = (ambient + diffuse + specular) * baseColor.rgb;
+    vec3 lighting = (ambient + diffuse + specular) * baseColor.rgb;
+    vec3 emissive = uUseEmissive ? uEmissiveColor : vec3(0.0);
+    vec3 result = lighting + emissive;
     FragColor = vec4(result, baseColor.w);
 }

@@ -21,6 +21,7 @@ namespace Game
         public static List<Matrix4X4<float>> plantsModelMatrices = new();
         public static List<Matrix4X4<float>> rocksModelMatrices = new();
         public static List<Vector2D<float>> obstacleCoordinates = new();
+        public static List<Vector2D<float>> mushroomPositions = new();
         private static int limit = 170;
         private static float minDistance = 20;
 
@@ -184,14 +185,41 @@ namespace Game
             }
             foreach (Vector2D<float> coord in generatedCoordinates)
             {
-                var index = rand.Next(0, 5);
                 var rotate = rand.Next(-19, 19);
-
-                var scale = Matrix4X4.CreateScale(1f, 1f, 1f);
+                float scaleValue = 2f;
+                var scale = Matrix4X4.CreateScale(scaleValue);
                 var trans = Matrix4X4.CreateTranslation(new Vector3D<float>(coord.X, 0, coord.Y));
                 var rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
                 var modelMatrix = scale * rotY * trans;
                 rocksModelMatrices.Add(modelMatrix);
+            }
+        }
+
+        internal static void GenerateMushrooms()
+        {
+            int n = 10;
+            int i = 0;
+            List<Vector2D<float>> generatedCoordinates = new();
+
+            while (i < n)
+            {
+                float x = rand.Next(-limit, limit + 1);
+                float z = rand.Next(-limit, limit + 1);
+                var coord = new Vector2D<float>(x, z);
+
+                bool invalid = obstacleCoordinates.Any(c => Vector2D.Distance(coord, c) < minDistance);
+
+                if (!invalid)
+                {
+                    generatedCoordinates.Add(coord);
+                    obstacleCoordinates.Add(coord);
+                    i++;
+                }
+            }
+
+            foreach (Vector2D<float> coord in generatedCoordinates)
+            {
+                mushroomPositions.Add(coord);
             }
         }
     }

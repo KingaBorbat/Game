@@ -14,7 +14,7 @@ namespace Game
 
         private GL Gl;
 
-        public GlObject(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, uint texture, GL gl)
+        public GlObject(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl, uint? texture = null)
         {
             this.Vao = vao;
             this.Vertices = vertices;
