@@ -23,7 +23,7 @@ namespace Game
         public void InitializeCharacter()
         {
             obj = ObjectResourceReader.CreateObjWithtexture(gl, "lizard2.obj", "lizard.jpg");
-            position = new Vector3D<float>(0f, 0.5f, 0f);
+            position = new Vector3D<float>(0f, 1f, 0f);
             rotationY =0f;
         }
 

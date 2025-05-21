@@ -52,7 +52,7 @@ namespace Game
 
         private static float Shininess = 50;
         public static float characterRadius = 0.5f;
-        public static float collectibleRadius = 0.2f;
+        public static float collectibleRadius = 1f;
         static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
@@ -133,18 +133,6 @@ namespace Game
                     MapObjectRandomizer.mushroomPositions.Remove(coord);
                 }
             }
-            var obstacleRadius = 5f;
-            foreach(Vector2D<float> coord in MapObjectRandomizer.obstacleCoordinates.ToList())
-            {
-                Vector3D<float> obstaclePos = new Vector3D<float>(coord.X, 0f, coord.Y);
-
-                float distance = (character.position - obstaclePos).Length;
-
-                if(distance < characterRadius + obstacleRadius)
-                {
-                    Console.WriteLine("Utkozes");
-                }
-            }
             camera.UpdatePosition();
             animation.AdvanceTime(deltaTime);
             Keyboard_Reaction();
@@ -166,7 +154,7 @@ namespace Game
         {
             skybox = Skybox.CreateSkybox(Gl, "");
             map = Map.CreateMap(Gl, "ground4.png");
-            rock = ObjectResourceReader.CreateObjWithtexture(Gl, "rock.obj", "rockTexture.jpg");
+            rock = ObjectResourceReader.CreateObjWithtexture(Gl, "Stone.obj", "StoneAlbedo.png");
             agave = ObjectResourceReader.CreateObjWithtexture(Gl, "agave.obj", "agaveTexture.png");
             mushroom = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "mushroom.obj");
             glowworm = ObjectResourceReader.CreateObjWithColor(Gl, new float[] { 1f, 1f, 0f, 1f }, "sphere.obj");
@@ -250,23 +238,29 @@ namespace Game
 
             float moveSpeed = 0.05f;
             float rotationValue = (float)Math.PI / 180;
-            if(_pressedKeys.Contains(Key.W))
+            if (_pressedKeys.Contains(Key.W))
             {
-                character.position += right * moveSpeed;
+                Vector3D<float> nextPos = character.position + (right * moveSpeed);
+                if (!MapObjectRandomizer.CheckCollision(nextPos)) character.position = nextPos;
 
             }
             if (_pressedKeys.Contains(Key.S))
             {
-                character.position -= right * moveSpeed;
+                Vector3D<float> nextPos = character.position - (right * moveSpeed);
+                if (!MapObjectRandomizer.CheckCollision(nextPos)) character.position = nextPos;
 
             }
             if (_pressedKeys.Contains(Key.A))
             {
+                //float nextAngle = character.rotationY + rotationValue;
+                //if (!MapObjectRandomizer.CheckCollision(nex))
                 character.rotationY += rotationValue;
 
             }
             if (_pressedKeys.Contains(Key.D))
             {
+                //float nextAngle = character.rotationY - rotationValue;
+                //if (!MapObjectRandomizer.CheckCollision(character.position)) character.rotationY = nextAngle;
                 character.rotationY -= rotationValue;
             }
             if (_pressedKeys.Count > 0)
@@ -290,7 +284,8 @@ namespace Game
             Vector3D<float> pos = character.position;
             trans = Matrix4X4.CreateTranslation(pos.X, pos.Y, pos.Z);
             var rotY = Matrix4X4.CreateRotationY(character.rotationY);
-            DrawObjectWithTexture(character.obj, rotY * trans);
+            scale = Matrix4X4.CreateScale(2f);
+            DrawObjectWithTexture(character.obj, scale * rotY * trans);
             for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
                 DrawObjectWithTexture(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);

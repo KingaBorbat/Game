@@ -20,13 +20,15 @@ namespace Game
         private static List<Vector2D<float>> treeCoordinates = new();
         public static List<Matrix4X4<float>> treesModelMatrices = new();
         public static List<Matrix4X4<float>> plantsModelMatrices = new();
+        public static List<Vector2D<float>> plantCoordinates = new();
         public static List<Matrix4X4<float>> rocksModelMatrices = new();
+        public static List<Vector2D<float>> rockCoordinates = new();
         public static List<Vector2D<float>> obstacleCoordinates = new();
         public static List<Vector2D<float>> mushroomPositions = new();
         public static List<Vector2D<float>> glowwormPositions = new();
         private static int limit = 170;
         private static float minDistance = 20;
-
+        private static int edgeCoord = 190;
         private static readonly Random rand = new();
 
         internal static void GenerateEdgeTrees()
@@ -163,6 +165,7 @@ namespace Game
                 var modelMatrix = scale * rotY * trans;
                 plantsModelMatrices.Add(modelMatrix);
             }
+            plantCoordinates = generatedCoordinates;
         }
 
         internal static void GenerateRocks()
@@ -189,13 +192,14 @@ namespace Game
             foreach (Vector2D<float> coord in generatedCoordinates)
             {
                 var rotate = rand.Next(-19, 19);
-                float scaleValue = 2f;
+                float scaleValue = 0.5f;
                 var scale = Matrix4X4.CreateScale(scaleValue);
                 var trans = Matrix4X4.CreateTranslation(new Vector3D<float>(coord.X, 0, coord.Y));
                 var rotY = Matrix4X4.CreateRotationY((float)Math.PI / rotate);
                 var modelMatrix = scale * rotY * trans;
                 rocksModelMatrices.Add(modelMatrix);
             }
+            rockCoordinates = generatedCoordinates;
         }
 
         internal static void GenerateMushrooms()
@@ -251,6 +255,52 @@ namespace Game
             {
                 glowwormPositions.Add(coord);
             }
+        }
+
+        internal static bool CheckCollision(Vector3D<float> characterCoordinates)
+        {
+            float characterRadius = 0.2f;
+            float treeRadius = 2f;
+            float rockradius = 2.5f;
+            float plantRadius = 3f;
+            foreach (Vector2D<float> coord in treeCoordinates)
+            {
+                Vector3D<float> obstaclePos = new Vector3D<float>(coord.X, 0f, coord.Y);
+
+                float distance = (characterCoordinates - obstaclePos).Length;
+
+                if (distance < characterRadius + treeRadius)
+                {
+                    return true;
+                }
+
+            }
+
+            foreach (Vector2D<float> coord in rockCoordinates)
+            {
+                Vector3D<float> obstaclePos = new Vector3D<float>(coord.X, 0f, coord.Y);
+
+                float distance = (characterCoordinates - obstaclePos).Length;
+
+                if (distance < characterRadius + rockradius)
+                {
+                    return true;
+                }
+            }
+
+            foreach (Vector2D<float> coord in plantCoordinates)
+            {
+                Vector3D<float> obstaclePos = new Vector3D<float>(coord.X, 0f, coord.Y);
+
+                float distance = (characterCoordinates - obstaclePos).Length;
+
+                if (distance < characterRadius + plantRadius)
+                {
+                    return true;
+                }
+            }
+            if (characterCoordinates.X > edgeCoord || characterCoordinates.X < -edgeCoord || characterCoordinates.Z > edgeCoord || characterCoordinates.Z < -edgeCoord) return true;
+            return false;
         }
     }
 }
