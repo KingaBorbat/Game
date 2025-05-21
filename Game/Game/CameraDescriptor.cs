@@ -31,6 +31,12 @@ namespace Game
             UpdatePosition();
         }
 
+        public void SetView(bool cameraView)
+        {
+            isFirstPerson = cameraView;
+            UpdatePosition();
+        }
+
         public void UpdatePosition()
         {
             if (isFirstPerson)

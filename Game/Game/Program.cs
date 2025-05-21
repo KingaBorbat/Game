@@ -1,7 +1,9 @@
-﻿using Silk.NET.GLFW;
+﻿using ImGuiNET;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
 using ErrorCode = Silk.NET.OpenGL.ErrorCode;
 
@@ -14,7 +16,7 @@ namespace Game
         private static Animation animation = new Animation();
 
         private static HashSet<Key> _pressedKeys = new HashSet<Key>();
-
+        private static ImGuiController controller;
         private static Skybox skybox;
         private static List<GlObject> trees = new();
         private static List<string> treeNames = new();
@@ -53,6 +55,8 @@ namespace Game
         private static float Shininess = 50;
         public static float characterRadius = 0.5f;
         public static float collectibleRadius = 1f;
+
+        public static bool firstPerson = false;
         static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
@@ -82,6 +86,8 @@ namespace Game
             }
 
             Gl = window.CreateOpenGL();
+
+            controller = new ImGuiController(Gl, window, inputContext);
 
             window.FramebufferResize += s =>
             {
@@ -119,6 +125,20 @@ namespace Game
             SetSpecular();
 
             DrawObjects();
+            ImGuiNET.ImGui.Begin("Camera View");
+            if (ImGui.RadioButton("First Person", firstPerson == false))
+            {
+                firstPerson = true;
+                camera.SetView(firstPerson);
+            }
+
+            if (ImGui.RadioButton("Third Person", firstPerson == true))
+            {
+                firstPerson = false;
+                camera.SetView(firstPerson);
+            }
+            ImGuiNET.ImGui.End();
+            controller.Render();
         }
         private static void Window_Update(double deltaTime)
         {
@@ -128,7 +148,7 @@ namespace Game
 
                 float distance = (character.position - mushroomPos).Length;
 
-                if (distance <  characterRadius + collectibleRadius)
+                if (distance < characterRadius + collectibleRadius)
                 {
                     MapObjectRandomizer.mushroomPositions.Remove(coord);
                 }
@@ -136,8 +156,15 @@ namespace Game
             camera.UpdatePosition();
             animation.AdvanceTime(deltaTime);
             Keyboard_Reaction();
+            controller.Update((float)deltaTime);
+
         }
         private static void Window_Closing()
+        {
+            ReleaseObjects();
+        }
+
+        private static void ReleaseObjects()
         {
             skybox.ReleaseGlObject();
             map.ReleaseGlObject();
@@ -146,7 +173,6 @@ namespace Game
             agave.ReleaseGlObject();
             character.obj.ReleaseGlObject();
             mushroom.ReleaseGlObject();
-
         }
 
         // set up objects
@@ -205,12 +231,11 @@ namespace Game
             Gl.DeleteShader(fshader);
         }
 
-      
+
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
-            
-            _pressedKeys.Add(key); 
-            Console.WriteLine(key.ToString());
+
+            _pressedKeys.Add(key);
 
             if (key == Key.C)
                 camera.ToggleView();
@@ -218,7 +243,7 @@ namespace Game
 
         private static void Keyboard_KeyUp(IKeyboard keyboard, Key key, int arg3)
         {
-            _pressedKeys.Remove(key); 
+            _pressedKeys.Remove(key);
         }
 
         private static void Keyboard_Reaction()
@@ -236,7 +261,8 @@ namespace Game
                 -(float)Math.Sin(character.rotationY)
             );
 
-            float moveSpeed = 0.05f;
+
+            float moveSpeed = 0.1f;
             float rotationValue = (float)Math.PI / 180;
             if (_pressedKeys.Contains(Key.W))
             {
@@ -268,7 +294,7 @@ namespace Game
                 camera.UpdatePosition();
             }
         }
-        
+
 
         public static void DrawObjects()
         {
@@ -285,16 +311,18 @@ namespace Game
             trans = Matrix4X4.CreateTranslation(pos.X, pos.Y, pos.Z);
             var rotY = Matrix4X4.CreateRotationY(character.rotationY);
             scale = Matrix4X4.CreateScale(2f);
+            DrawObjectWithTexture(rock, Matrix4X4<float>.Identity);
             DrawObjectWithTexture(character.obj, scale * rotY * trans);
             for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
                 DrawObjectWithTexture(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);
             }
 
-            for (int i = 0; i < MapObjectRandomizer.treesModelMatrices.Count; i++) {
+            for (int i = 0; i < MapObjectRandomizer.treesModelMatrices.Count; i++)
+            {
                 DrawObjectWithTexture(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
             }
-            foreach(Matrix4X4<float> modelMatr in MapObjectRandomizer.plantsModelMatrices)
+            foreach (Matrix4X4<float> modelMatr in MapObjectRandomizer.plantsModelMatrices)
             {
                 DrawObjectWithTexture(agave, modelMatr);
             }
@@ -302,7 +330,7 @@ namespace Game
             {
                 DrawObjectWithTexture(rock, modelMatr);
             }
-            
+
             Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 0);
             Gl.Uniform1(Gl.GetUniformLocation(program, "uUseEmissive"), 1);
             Gl.Uniform3(Gl.GetUniformLocation(program, "uEmissiveColor"), 0.5f, 0.5f, 0f);
@@ -315,7 +343,8 @@ namespace Game
             }
             float orbitRadius = 5f;
             scale = Matrix4X4.CreateScale(0.001f);
-            for (int i = 0; i < MapObjectRandomizer.glowwormPositions.Count; i+=3) {
+            for (int i = 0; i < MapObjectRandomizer.glowwormPositions.Count; i += 3)
+            {
                 float offset = i * i;
                 var coord = MapObjectRandomizer.glowwormPositions[i];
                 var rot = Matrix4X4.CreateRotationX((float)animation.GlobalXAngle + offset);
@@ -393,7 +422,7 @@ namespace Game
                 throw new Exception($"{LightPositionVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 0f, 50f,0f);
+            Gl.Uniform3(location, 0f, 50f, 0f);
             CheckError();
         }
 
@@ -492,7 +521,7 @@ namespace Game
         }
         private static unsafe void SetProjectionMatrix()
         {
-            var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)Math.PI / 4f, 1024f / 768f, 0.1f, 1000);
+            var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)Math.PI / 4f, 1920f / 1080f, 0.1f, 1000);
             int location = Gl.GetUniformLocation(program, ProjectionMatrixVariableName);
 
             if (location == -1)
@@ -523,7 +552,7 @@ namespace Game
             var error = (ErrorCode)Gl.GetError();
             if (error != ErrorCode.NoError)
                 throw new Exception("GL.GetError() returned " + error.ToString());
-            
+
         }
     }
 }
