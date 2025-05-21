@@ -137,6 +137,9 @@ namespace Game
             rock.ReleaseGlObject();
             for (int i = 0; i < trees.Count; i++) trees[i].ReleaseGlObject();
             agave.ReleaseGlObject();
+            character.obj.ReleaseGlObject();
+            mushroom.ReleaseGlObject();
+
         }
 
         // set up objects
@@ -222,7 +225,6 @@ namespace Game
                     character.position -= right * moveSpeed;
                     camera.UpdatePosition();
                     break;
-                    break;
                 case Key.A:
                     character.rotationY += (float)Math.PI / 10;
                     camera.UpdatePosition();
@@ -230,6 +232,9 @@ namespace Game
                 case Key.D:
                     character.rotationY -= (float)Math.PI / 10;
                     camera.UpdatePosition();
+                    break;
+                case Key.C:
+                    camera.ToggleView();
                     break;
             }
         }

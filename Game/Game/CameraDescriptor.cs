@@ -9,31 +9,57 @@ namespace Game
 {
     internal class CameraDescriptor
     {
-        private Character _character;
-
+        private Character character;
+        private bool isFirstPerson = false;
         private const float DistanceBehind = 6f;
         private const float HeightAbove = 1.5f;
+        private const float EyeHeight = 1.7f;
 
         public Vector3D<float> Position { get; private set; }
-        public Vector3D<float> Target => _character.position;
+        public Vector3D<float> Target { get; private set; }
         public Vector3D<float> Up { get; } = Vector3D<float>.UnitY;
 
         public CameraDescriptor(Character character)
         {
-            _character = character;
+            this.character = character;
+            UpdatePosition();
+        }
+
+        public void ToggleView()
+        {
+            isFirstPerson = !isFirstPerson;
             UpdatePosition();
         }
 
         public void UpdatePosition()
         {
-            float behindX = _character.position.X - DistanceBehind * (float)Math.Cos(-_character.rotationY);
-            float behindZ = _character.position.Z - DistanceBehind * (float)Math.Sin(-_character.rotationY);
+            if (isFirstPerson)
+            {
+                Position = new Vector3D<float>(
+                    character.position.X,
+                    character.position.Y + EyeHeight,
+                    character.position.Z
+                );
 
-            Position = new Vector3D<float>(
-                behindX,
-                _character.position.Y + HeightAbove,
-                behindZ
-            );
+                Target = Position + new Vector3D<float>(
+                    (float)Math.Cos(character.rotationY), 
+                    0,
+                    -(float)Math.Sin(character.rotationY)
+                );
+            }
+            else
+            {
+                float behindX = character.position.X - DistanceBehind * (float)Math.Cos(-character.rotationY);
+                float behindZ = character.position.Z - DistanceBehind * (float)Math.Sin(-character.rotationY);
+
+                Position = new Vector3D<float>(
+                    behindX,
+                    character.position.Y + HeightAbove,
+                    behindZ
+                );
+                Target = character.position;
+            }
+            
         }
     }
 }
