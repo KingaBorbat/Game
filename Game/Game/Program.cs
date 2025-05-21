@@ -47,6 +47,8 @@ namespace Game
         private const string ShinenessVariableName = "uShininess";
 
         private static float Shininess = 50;
+        public static float characterRadius = 0.5f;
+        public static float collectibleRadius = 0.2f;
         static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
@@ -114,6 +116,17 @@ namespace Game
         }
         private static void Window_Update(double deltaTime)
         {
+            foreach (Vector2D<float> coord in MapObjectRandomizer.mushroomPositions.ToList())
+            {
+                Vector3D<float> mushroomPos = new Vector3D<float>(coord.X, 0f, coord.Y);
+
+                float distance = (character.position - mushroomPos).Length;
+
+                if (distance <  characterRadius + collectibleRadius)
+                {
+                    MapObjectRandomizer.mushroomPositions.Remove(coord);
+                }
+            }
             camera.UpdatePosition();
             animation.AdvanceTime(deltaTime);
         }
@@ -268,11 +281,10 @@ namespace Game
             for (int i = 0; i < MapObjectRandomizer.glowwormPositions.Count; i+=3) {
                 float offset = i * i;
                 var coord = MapObjectRandomizer.glowwormPositions[i];
-                trans = Matrix4X4.CreateTranslation(coord.X, 10f, coord.Y);
                 var rot = Matrix4X4.CreateRotationX((float)animation.GlobalXAngle + offset);
                 rotY = Matrix4X4.CreateRotationY((float)animation.GlobalYAngle + offset);
                 var rotZ = Matrix4X4.CreateRotationZ((float)animation.GlobalZAngle + offset);
-                var trans2 = Matrix4X4.CreateTranslation(coord.X, 10F, coord.Y);
+                var trans2 = Matrix4X4.CreateTranslation(coord.X, 5f, coord.Y);
                 Matrix4X4<float> orbitOffset = Matrix4X4.CreateTranslation(0f, 0f, orbitRadius);
                 DrawObjectWithColor(glowworm, scale * orbitOffset * rot * rotY * rotZ * trans2);
             }
