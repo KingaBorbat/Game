@@ -14,6 +14,7 @@ namespace Game
 {
     internal class ObjectResourceReader
     {
+        // create object with texture
         public static unsafe GlObject CreateObjWithtexture(GL Gl, string objResource, string textureResource)
         {
             uint vao = Gl.GenVertexArray();
@@ -164,7 +165,7 @@ namespace Game
             }
         }
 
-
+        // Read obj file data
         private static unsafe void ReadObjData(
             out List<float[]> objVertices,
             out List<int[]> objFaces,
@@ -275,6 +276,7 @@ namespace Game
             }
         }
 
+        // Create object with color
         public static unsafe GlObject CreateObjWithColor(GL Gl, float[] faceColor, string objResource)
         {
             uint vao = Gl.GenVertexArray();
@@ -378,7 +380,6 @@ namespace Game
                         glVertex.Add(normal.Z);
                     }
 
-                    // add textrure, color
 
                     // check if vertex exists
                     var glVertexStringKey = string.Join(" ", glVertex);
@@ -393,7 +394,6 @@ namespace Game
                     glIndices.Add((uint)glVertexIndices[glVertexStringKey]);
                 }
             }
-            Console.WriteLine(glColors.Count);
         }
         private static unsafe ImageResult ReadTextureImage(string textureResource)
         {

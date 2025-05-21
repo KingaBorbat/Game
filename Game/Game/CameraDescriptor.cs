@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Silk.NET.Maths;
 
+// camera that follows the character in third person or first person
 namespace Game
 {
     internal class CameraDescriptor

@@ -18,7 +18,7 @@ namespace Game
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
 
-            // defien vertex positions
+            // define vertex positions
             float[] vertexArray = new float[]
             {
                 -1f, 0f, 1f, 0f, 1f, 0f, 0f, 1f, 0f, 

@@ -17,9 +17,10 @@ namespace Game
         private double rotationSpeed { get; set; } = 0.5; 
 
         private double orbitRnage { get; set; } = 0.5;
+
+        // change angles 
         internal void AdvanceTime(double deltaTime)
         {
-            // set a simulation time
             Time += deltaTime;
 
             GlobalXAngle = -Time;

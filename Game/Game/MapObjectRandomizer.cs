@@ -10,6 +10,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using static System.Formats.Asn1.AsnWriter;
 
+// Generates random coordinates for obstacle objects and checks collision with obstacles
 namespace Game
 {
     internal class MapObjectRandomizer
@@ -20,9 +21,9 @@ namespace Game
         private static List<Vector2D<float>> treeCoordinates = new();
         public static List<Matrix4X4<float>> treesModelMatrices = new();
         public static List<Matrix4X4<float>> plantsModelMatrices = new();
-        public static List<Vector2D<float>> plantCoordinates = new();
+        private static List<Vector2D<float>> plantCoordinates = new();
         public static List<Matrix4X4<float>> rocksModelMatrices = new();
-        public static List<Vector2D<float>> rockCoordinates = new();
+        private static List<Vector2D<float>> rockCoordinates = new();
         public static List<Vector2D<float>> obstacleCoordinates = new();
         public static List<Vector2D<float>> mushroomPositions = new();
         public static List<Vector2D<float>> glowwormPositions = new();
@@ -222,11 +223,7 @@ namespace Game
                     i++;
                 }
             }
-
-            foreach (Vector2D<float> coord in generatedCoordinates)
-            {
-                mushroomPositions.Add(coord);
-            }
+            mushroomPositions = generatedCoordinates;
         }
 
         internal static void GenerateGlowworms()
@@ -249,11 +246,7 @@ namespace Game
                     i++;
                 }
             }
-
-            foreach (Vector2D<float> coord in generatedCoordinates)
-            {
-                glowwormPositions.Add(coord);
-            }
+            glowwormPositions = generatedCoordinates;
         }
 
         internal static bool CheckCollision(Vector3D<float> characterCoordinates)

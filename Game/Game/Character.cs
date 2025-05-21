@@ -15,6 +15,10 @@ namespace Game
         public Vector3D<float> position; 
         public float rotationY;
         private GL gl;
+        private Vector3D<float> forward;
+        private Vector3D<float> right;
+        private float moveSpeed = 0.1f;
+        private float rotationValue = (float)Math.PI / 180;
 
         public Character(GL gl)
         {
@@ -27,6 +31,42 @@ namespace Game
             rotationY =0f;
         }
 
+        public void MoveForward()
+        {
+            CalculateVectors();
+            Vector3D<float> nextPos = position + (right * moveSpeed);
+            if (!MapObjectRandomizer.CheckCollision(nextPos)) position = nextPos;
+        }
 
+        public void MoveBackward() {
+            CalculateVectors();
+            Vector3D<float> nextPos = position - (right * moveSpeed);
+            if (!MapObjectRandomizer.CheckCollision(nextPos)) position = nextPos;
+        }
+
+        public void RotateRight()
+        {
+            rotationY -= rotationValue;
+        }
+
+        public void RotateLeft() {
+            rotationY += rotationValue;
+        }
+
+        private void CalculateVectors()
+        {
+            forward = new Vector3D<float>(
+                (float)Math.Sin(rotationY),
+                0,
+                (float)Math.Cos(rotationY)
+
+            );
+
+            right = new Vector3D<float>(
+                (float)Math.Cos(rotationY),
+                0,
+                -(float)Math.Sin(rotationY)
+            );
+        }
     }
 }

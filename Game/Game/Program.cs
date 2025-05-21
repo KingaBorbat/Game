@@ -15,17 +15,7 @@ namespace Game
 
         private static Animation animation = new Animation();
 
-        private static HashSet<Key> _pressedKeys = new HashSet<Key>();
         private static ImGuiController controller;
-        private static Skybox skybox;
-        private static List<GlObject> trees = new();
-        private static List<string> treeNames = new();
-        private static GlObject rock;
-        private static GlObject agave;
-        private static GlObject mushroom;
-        private static GlObject glowworm;
-        private static Character character;
-        private static Map map;
 
         private static GL Gl;
 
@@ -34,6 +24,18 @@ namespace Game
         private static IInputContext inputContext;
 
         private static uint program;
+
+        private static HashSet<Key> pressedKeys = new HashSet<Key>();
+
+        private static Skybox skybox;
+        private static Map map;
+        private static List<GlObject> trees = new();
+        private static List<string> treeNames = new();
+        private static GlObject rock;
+        private static GlObject agave;
+        private static GlObject mushroom;
+        private static GlObject glowworm;
+        private static Character character;
 
         private const string ModelMatrixVariableName = "uModel";
         private const string NormalMatrixVariableName = "uNormal";
@@ -51,6 +53,9 @@ namespace Game
         private const string SpecularStrength = "uSpecularStrength";
 
         private const string ShinenessVariableName = "uShininess";
+        private const string EmissiveVariableName = "uEmissiveColor";
+        private const string UseEmissiveVariableName = "uUseEmissive";
+        private const string UseTextureVariableName = "uUseTexture";
 
         private static float Shininess = 50;
         public static float characterRadius = 0.5f;
@@ -63,7 +68,7 @@ namespace Game
         {
             WindowOptions windowOptions = WindowOptions.Default;
             windowOptions.Title = "Jungle Game";
-            windowOptions.Size = new Vector2D<int>(1000, 1000);
+            windowOptions.Size = new Vector2D<int>(1920, 1080);
 
             windowOptions.PreferredDepthBufferBits = 24;
 
@@ -82,7 +87,6 @@ namespace Game
             inputContext = window.CreateInput();
             foreach (var keyboard in inputContext.Keyboards)
             {
-                //keyboard.KeyDown += Keyboard_KeyDown;
                 keyboard.KeyDown += Keyboard_KeyDown;
                 keyboard.KeyUp += Keyboard_KeyUp;
             }
@@ -107,26 +111,38 @@ namespace Game
             Gl.DepthFunc(DepthFunction.Lequal);
         }
 
+        
+        private static void Window_Update(double deltaTime)
+        {
+            CheckMushroomCollision();
+            if (nrMushrooms == 0)
+            {
+                gameOver = true;
+            }
+            camera.UpdatePosition();
+            animation.AdvanceTime(deltaTime);
+            Keyboard_Reaction();
+            controller.Update((float)deltaTime);
+
+        }
         private static void Window_Render(double obj)
         {
             Gl.Clear(ClearBufferMask.ColorBufferBit);
             Gl.Clear(ClearBufferMask.DepthBufferBit);
-
-
             Gl.UseProgram(program);
 
             SetViewMatrix();
             SetProjectionMatrix();
-
-            SetLightColor();
-            SetLightPosition();
-            SetViewerPosition();
-            SetShininess();
-            SetAmbient();
-            SetDiffuse();
-            SetSpecular();
-
+            SetUnifrom3(LightColorVariableName, new Vector3D<float>(0.3f, 0.4f, 0.7f));
+            SetUnifrom3(LightPositionVariableName, new Vector3D<float>(0f, 50f, 0f));
+            SetUnifrom3(ViewPositionVariableName, new Vector3D<float>(camera.Position.X, camera.Position.Y, camera.Position.Z));
+            SetUnifrom3(AmbientStrength, new Vector3D<float>(0.6f, 0.4f, 0.2f));
+            SetUnifrom3(DiffuseStrength, new Vector3D<float>(0.5f, 0.3f, 0.1f));
+            SetUnifrom3(SpecularStrength, new Vector3D<float>(0.2f, 0.1f, 0.05f));
+            SetUnifrom3(LightColorVariableName, new Vector3D<float>(0.3f, 0.4f, 0.7f));
+            SetUniform1(ShinenessVariableName, Shininess);
             DrawObjects();
+
             ImGuiNET.ImGui.Begin("Camera View");
             if (ImGui.RadioButton("First Person", firstPerson == false))
             {
@@ -140,6 +156,8 @@ namespace Game
                 camera.SetView(firstPerson);
             }
             ImGuiNET.ImGui.End();
+
+            // if the player collected all mushrooms on the map, show a textbox and close the application if the player clicks "Exit"
             if (gameOver)
             {
                 ImGuiNET.ImGui.Begin("You Win!", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize);
@@ -148,7 +166,6 @@ namespace Game
 
                 if (ImGuiNET.ImGui.Button("Exit"))
                 {
-                    // Close the application
                     Environment.Exit(0);
                 }
 
@@ -156,7 +173,13 @@ namespace Game
             }
             controller.Render();
         }
-        private static void Window_Update(double deltaTime)
+
+        private static void Window_Closing()
+        {
+            ReleaseObjects();
+        }
+        // check if the character collides with a mushroom, decrease the number of mushrooms
+        private static void CheckMushroomCollision()
         {
             foreach (Vector2D<float> coord in MapObjectRandomizer.mushroomPositions.ToList())
             {
@@ -168,22 +191,8 @@ namespace Game
                 {
                     MapObjectRandomizer.mushroomPositions.Remove(coord);
                     nrMushrooms--;
-                    Console.WriteLine(nrMushrooms);
                 }
             }
-            if(nrMushrooms == 0)
-            {
-                gameOver = true;
-            }
-            camera.UpdatePosition();
-            animation.AdvanceTime(deltaTime);
-            Keyboard_Reaction();
-            controller.Update((float)deltaTime);
-
-        }
-        private static void Window_Closing()
-        {
-            ReleaseObjects();
         }
 
         private static void ReleaseObjects()
@@ -197,7 +206,7 @@ namespace Game
             mushroom.ReleaseGlObject();
         }
 
-        // set up objects
+        // set up objects: read obj files and textures, generate random coordinates for obstacles, mushrooms and glowworms
         private static void SetUpObjects()
         {
             skybox = Skybox.CreateSkybox(Gl, "");
@@ -252,94 +261,76 @@ namespace Game
             Gl.DeleteShader(vshader);
             Gl.DeleteShader(fshader);
         }
-
-
+        
+        // keyboard interactions
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
         {
 
-            _pressedKeys.Add(key);
+            pressedKeys.Add(key);
 
             if (key == Key.C)
                 camera.ToggleView();
         }
-
         private static void Keyboard_KeyUp(IKeyboard keyboard, Key key, int arg3)
         {
-            _pressedKeys.Remove(key);
+            pressedKeys.Remove(key);
         }
-
         private static void Keyboard_Reaction()
         {
-            Vector3D<float> forward = new Vector3D<float>(
-                (float)Math.Sin(character.rotationY),
-                0,
-                (float)Math.Cos(character.rotationY)
-
-            );
-
-            Vector3D<float> right = new Vector3D<float>(
-                (float)Math.Cos(character.rotationY),
-                0,
-                -(float)Math.Sin(character.rotationY)
-            );
-
-
-            float moveSpeed = 0.1f;
-            float rotationValue = (float)Math.PI / 180;
-            if (_pressedKeys.Contains(Key.W))
+            if (pressedKeys.Contains(Key.W))
             {
-                Vector3D<float> nextPos = character.position + (right * moveSpeed);
-                if (!MapObjectRandomizer.CheckCollision(nextPos)) character.position = nextPos;
+                character.MoveForward();
+            }
+            if (pressedKeys.Contains(Key.S))
+            {
+                character.MoveBackward();
+            }
+            if (pressedKeys.Contains(Key.A))
+            {
+                character.RotateLeft();
 
             }
-            if (_pressedKeys.Contains(Key.S))
+            if (pressedKeys.Contains(Key.D))
             {
-                Vector3D<float> nextPos = character.position - (right * moveSpeed);
-                if (!MapObjectRandomizer.CheckCollision(nextPos)) character.position = nextPos;
-
+                character.RotateRight();
             }
-            if (_pressedKeys.Contains(Key.A))
-            {
-                //float nextAngle = character.rotationY + rotationValue;
-                //if (!MapObjectRandomizer.CheckCollision(nex))
-                character.rotationY += rotationValue;
-
-            }
-            if (_pressedKeys.Contains(Key.D))
-            {
-                //float nextAngle = character.rotationY - rotationValue;
-                //if (!MapObjectRandomizer.CheckCollision(character.position)) character.rotationY = nextAngle;
-                character.rotationY -= rotationValue;
-            }
-            if (_pressedKeys.Count > 0)
+            if (pressedKeys.Count > 0)
             {
                 camera.UpdatePosition();
             }
         }
 
-
+        // draw all objects on the map
         public static void DrawObjects()
         {
+            // set uUseEmissive and uUseTexture for textured objects
+            SetUniform1(UseEmissiveVariableName, 0);
+            SetUniform1(UseTextureVariableName, 1);
+
+            // draw skybox
             Matrix4X4<float> scale = Matrix4X4.CreateScale(400f);
             var trans = Matrix4X4.CreateTranslation(0f, 30f, 0f);
             Matrix4X4<float> modelMatrix = scale * trans;
-            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseEmissive"), 0);
-            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 1);
             DrawObjectWithTexture(skybox, modelMatrix);
+
+            // draw map
             scale = Matrix4X4.CreateScale(200f, 1f, 200f);
             modelMatrix = scale;
             DrawObjectWithTexture(map, modelMatrix);
+
+            // draw character
             Vector3D<float> pos = character.position;
             trans = Matrix4X4.CreateTranslation(pos.X, pos.Y, pos.Z);
             var rotY = Matrix4X4.CreateRotationY(character.rotationY);
             scale = Matrix4X4.CreateScale(2f);
-            DrawObjectWithTexture(rock, Matrix4X4<float>.Identity);
             DrawObjectWithTexture(character.obj, scale * rotY * trans);
+
+            // draw edge trees
             for (int i = 0; i < MapObjectRandomizer.edgeTreesModelMatrices.Count; i++)
             {
                 DrawObjectWithTexture(trees[MapObjectRandomizer.edgeTreeIndices[i]], MapObjectRandomizer.edgeTreesModelMatrices[i]);
             }
-
+            // draw obstacles: trees, agaves and rocks
             for (int i = 0; i < MapObjectRandomizer.treesModelMatrices.Count; i++)
             {
                 DrawObjectWithTexture(trees[MapObjectRandomizer.treeIndices[i]], MapObjectRandomizer.treesModelMatrices[i]);
@@ -353,9 +344,10 @@ namespace Game
                 DrawObjectWithTexture(rock, modelMatr);
             }
 
-            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseTexture"), 0);
-            Gl.Uniform1(Gl.GetUniformLocation(program, "uUseEmissive"), 1);
-            Gl.Uniform3(Gl.GetUniformLocation(program, "uEmissiveColor"), 0.5f, 0.5f, 0f);
+            // draw glowing mushrooms
+            SetUniform1(UseTextureVariableName, 0);
+            SetUniform1(UseEmissiveVariableName, 1);
+            SetUnifrom3(EmissiveVariableName, new Vector3D<float>(0.5f, 0.5f, 0f));
             foreach (Vector2D<float> coord in MapObjectRandomizer.mushroomPositions)
             {
                 Matrix4X4<float> rotate = Matrix4X4.CreateRotationX(-(float)Math.PI / 2);
@@ -363,6 +355,8 @@ namespace Game
                 trans = Matrix4X4.CreateTranslation(coord.X, 0f, coord.Y);
                 DrawObjectWithColor(mushroom, scale * rotate * trans);
             }
+
+            // draw moving glowworms
             float orbitRadius = 5f;
             scale = Matrix4X4.CreateScale(0.001f);
             for (int i = 0; i < MapObjectRandomizer.glowwormPositions.Count; i += 3)
@@ -378,6 +372,7 @@ namespace Game
             }
         }
 
+        // draw object with texture
         private static unsafe void DrawObjectWithTexture(GlObject obj, Matrix4X4<float> modelMatrix)
         {
             SetModelMatrix(modelMatrix);
@@ -401,7 +396,7 @@ namespace Game
             Gl.BindTexture(TextureTarget.Texture2D, 0);
             CheckError();
         }
-
+        // draw object with color
         private static unsafe void DrawObjectWithColor(GlObject obj, Matrix4X4<float> modelMatrix)
         {
             SetModelMatrix(modelMatrix);
@@ -419,97 +414,27 @@ namespace Game
                 return shaderReader.ReadToEnd();
         }
 
-
-        private static unsafe void SetLightColor()
+        private static unsafe void SetUnifrom3(string VariableName, Vector3D<float> value)
         {
-            int location = Gl.GetUniformLocation(program, LightColorVariableName);
+            int location = Gl.GetUniformLocation(program, VariableName);
 
             if (location == -1)
             {
-                throw new Exception($"{LightColorVariableName} uniform not found on shader.");
+                throw new Exception($"{VariableName} uniform not found on shader.");
             }
-
-            Gl.Uniform3(location, 0.3f, 0.4f, 0.7f);
+            Gl.Uniform3(location, value.X, value.Y, value.Z);
             CheckError();
         }
 
-
-
-        private static unsafe void SetLightPosition()
-        {
-            int location = Gl.GetUniformLocation(program, LightPositionVariableName);
+        private static void SetUniform1(string VariableName, float value) {
+            int location = Gl.GetUniformLocation(program, VariableName);
 
             if (location == -1)
             {
-                throw new Exception($"{LightPositionVariableName} uniform not found on shader.");
+                throw new Exception($"{VariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 0f, 50f, 0f);
-            CheckError();
-        }
-
-        private static unsafe void SetViewerPosition()
-        {
-            int location = Gl.GetUniformLocation(program, ViewPositionVariableName);
-
-            if (location == -1)
-            {
-                throw new Exception($"{ViewPositionVariableName} uniform not found on shader.");
-            }
-
-            Gl.Uniform3(location, camera.Position.X, camera.Position.Y, camera.Position.Z);
-            CheckError();
-        }
-
-        private static unsafe void SetShininess()
-        {
-            int location = Gl.GetUniformLocation(program, ShinenessVariableName);
-
-            if (location == -1)
-            {
-                throw new Exception($"{ShinenessVariableName} uniform not found on shader.");
-            }
-
-            Gl.Uniform1(location, Shininess);
-            CheckError();
-        }
-
-        private static unsafe void SetAmbient()
-        {
-            int location = Gl.GetUniformLocation(program, AmbientStrength);
-
-            if (location == -1)
-            {
-                throw new Exception($"{AmbientStrength} uniform not found on shader.");
-            }
-
-            Gl.Uniform3(location, 0.6f, 0.4f, 0.2f);
-            CheckError();
-        }
-
-        private static unsafe void SetDiffuse()
-        {
-            int location = Gl.GetUniformLocation(program, DiffuseStrength);
-
-            if (location == -1)
-            {
-                throw new Exception($"{DiffuseStrength} uniform not found on shader.");
-            }
-
-            Gl.Uniform3(location, 0.5f, 0.3f, 0.1f);
-            CheckError();
-        }
-
-        private static unsafe void SetSpecular()
-        {
-            int location = Gl.GetUniformLocation(program, SpecularStrength);
-
-            if (location == -1)
-            {
-                throw new Exception($"{SpecularStrength} uniform not found on shader.");
-            }
-
-            Gl.Uniform3(location, 0.2f, 0.1f, 0.05f);
+            Gl.Uniform1(location, value);
             CheckError();
         }
 
@@ -543,7 +468,8 @@ namespace Game
         }
         private static unsafe void SetProjectionMatrix()
         {
-            var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)Math.PI / 4f, 1920f / 1080f, 0.1f, 1000);
+            float aspectRatio = (float)window.Size.X / window.Size.Y;
+            var projectionMatrix = Matrix4X4.CreatePerspectiveFieldOfView<float>((float)Math.PI / 4f, aspectRatio, 0.1f, 1000);
             int location = Gl.GetUniformLocation(program, ProjectionMatrixVariableName);
 
             if (location == -1)
