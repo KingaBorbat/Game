@@ -1,7 +1,9 @@
-﻿using Silk.NET.Input;
+﻿using Silk.NET.GLFW;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using ErrorCode = Silk.NET.OpenGL.ErrorCode;
 
 namespace Game
 {
@@ -10,6 +12,8 @@ namespace Game
         private static CameraDescriptor camera;
 
         private static Animation animation = new Animation();
+
+        private static HashSet<Key> _pressedKeys = new HashSet<Key>();
 
         private static Skybox skybox;
         private static List<GlObject> trees = new();
@@ -72,7 +76,9 @@ namespace Game
             inputContext = window.CreateInput();
             foreach (var keyboard in inputContext.Keyboards)
             {
+                //keyboard.KeyDown += Keyboard_KeyDown;
                 keyboard.KeyDown += Keyboard_KeyDown;
+                keyboard.KeyUp += Keyboard_KeyUp;
             }
 
             Gl = window.CreateOpenGL();
@@ -127,8 +133,21 @@ namespace Game
                     MapObjectRandomizer.mushroomPositions.Remove(coord);
                 }
             }
+            var obstacleRadius = 5f;
+            foreach(Vector2D<float> coord in MapObjectRandomizer.obstacleCoordinates.ToList())
+            {
+                Vector3D<float> obstaclePos = new Vector3D<float>(coord.X, 0f, coord.Y);
+
+                float distance = (character.position - obstaclePos).Length;
+
+                if(distance < characterRadius + obstacleRadius)
+                {
+                    Console.WriteLine("Utkozes");
+                }
+            }
             camera.UpdatePosition();
             animation.AdvanceTime(deltaTime);
+            Keyboard_Reaction();
         }
         private static void Window_Closing()
         {
@@ -198,14 +217,29 @@ namespace Game
             Gl.DeleteShader(fshader);
         }
 
-        // handle keyboard input
+      
         private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
+        {
+            
+            _pressedKeys.Add(key); 
+            Console.WriteLine(key.ToString());
+
+            if (key == Key.C)
+                camera.ToggleView();
+        }
+
+        private static void Keyboard_KeyUp(IKeyboard keyboard, Key key, int arg3)
+        {
+            _pressedKeys.Remove(key); 
+        }
+
+        private static void Keyboard_Reaction()
         {
             Vector3D<float> forward = new Vector3D<float>(
                 (float)Math.Sin(character.rotationY),
                 0,
                 (float)Math.Cos(character.rotationY)
-                
+
             );
 
             Vector3D<float> right = new Vector3D<float>(
@@ -214,30 +248,33 @@ namespace Game
                 -(float)Math.Sin(character.rotationY)
             );
 
-            float moveSpeed = 0.1f;
-            switch (key)
+            float moveSpeed = 0.05f;
+            float rotationValue = (float)Math.PI / 180;
+            if(_pressedKeys.Contains(Key.W))
             {
-                case Key.W:
-                    character.position += right * moveSpeed;
-                    camera.UpdatePosition();
-                    break;
-                case Key.S:
-                    character.position -= right * moveSpeed;
-                    camera.UpdatePosition();
-                    break;
-                case Key.A:
-                    character.rotationY += (float)Math.PI / 10;
-                    camera.UpdatePosition();
-                    break;
-                case Key.D:
-                    character.rotationY -= (float)Math.PI / 10;
-                    camera.UpdatePosition();
-                    break;
-                case Key.C:
-                    camera.ToggleView();
-                    break;
+                character.position += right * moveSpeed;
+
+            }
+            if (_pressedKeys.Contains(Key.S))
+            {
+                character.position -= right * moveSpeed;
+
+            }
+            if (_pressedKeys.Contains(Key.A))
+            {
+                character.rotationY += rotationValue;
+
+            }
+            if (_pressedKeys.Contains(Key.D))
+            {
+                character.rotationY -= rotationValue;
+            }
+            if (_pressedKeys.Count > 0)
+            {
+                camera.UpdatePosition();
             }
         }
+        
 
         public static void DrawObjects()
         {
