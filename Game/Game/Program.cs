@@ -55,6 +55,8 @@ namespace Game
         private static float Shininess = 50;
         public static float characterRadius = 0.5f;
         public static float collectibleRadius = 1f;
+        public static int nrMushrooms = 20;
+        public static bool gameOver = false;
 
         public static bool firstPerson = false;
         static void Main(string[] args)
@@ -138,6 +140,20 @@ namespace Game
                 camera.SetView(firstPerson);
             }
             ImGuiNET.ImGui.End();
+            if (gameOver)
+            {
+                ImGuiNET.ImGui.Begin("You Win!", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize);
+
+                ImGuiNET.ImGui.Text("Congratulations! You collected all mushrooms.");
+
+                if (ImGuiNET.ImGui.Button("Exit"))
+                {
+                    // Close the application
+                    Environment.Exit(0);
+                }
+
+                ImGuiNET.ImGui.End();
+            }
             controller.Render();
         }
         private static void Window_Update(double deltaTime)
@@ -151,7 +167,13 @@ namespace Game
                 if (distance < characterRadius + collectibleRadius)
                 {
                     MapObjectRandomizer.mushroomPositions.Remove(coord);
+                    nrMushrooms--;
+                    Console.WriteLine(nrMushrooms);
                 }
+            }
+            if(nrMushrooms == 0)
+            {
+                gameOver = true;
             }
             camera.UpdatePosition();
             animation.AdvanceTime(deltaTime);
@@ -197,7 +219,7 @@ namespace Game
             MapObjectRandomizer.GenerateTrees();
             MapObjectRandomizer.GeneratePlants();
             MapObjectRandomizer.GenerateRocks();
-            MapObjectRandomizer.GenerateMushrooms();
+            MapObjectRandomizer.GenerateMushrooms(nrMushrooms);
             MapObjectRandomizer.GenerateGlowworms();
         }
 

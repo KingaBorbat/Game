@@ -202,9 +202,8 @@ namespace Game
             rockCoordinates = generatedCoordinates;
         }
 
-        internal static void GenerateMushrooms()
+        internal static void GenerateMushrooms(int n)
         {
-            int n = 15;
             int i = 0;
             List<Vector2D<float>> generatedCoordinates = new();
 
